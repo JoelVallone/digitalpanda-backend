@@ -1,6 +1,6 @@
 package org.digitalpanda.backend.application.data;
 
-public class SensorMeasure {
+public class SensorMeasure implements Comparable{
 
     private final long timestamp;
     private final double measure;
@@ -12,4 +12,11 @@ public class SensorMeasure {
 
     public long getTimestamp() { return timestamp; }
     public double getMeasure() { return measure; }
+
+    @Override
+    public int compareTo(Object o) {
+        if (!(o instanceof SensorMeasure)) return -1;
+        SensorMeasure sensorMeasure = (SensorMeasure) o;
+        return (int)(this.timestamp - sensorMeasure.timestamp);
+    }
 }
