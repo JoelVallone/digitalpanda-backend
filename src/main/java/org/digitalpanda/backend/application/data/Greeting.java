@@ -1,4 +1,4 @@
-package org.digitalpanda.application;
+package org.digitalpanda.backend.application.data;
 
 public class Greeting {
 
@@ -13,7 +13,6 @@ public class Greeting {
     public long getId() {
         return id;
     }
-
     public String getContent() {
         return content;
     }
