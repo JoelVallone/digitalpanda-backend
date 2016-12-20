@@ -25,7 +25,7 @@ public class SensorMeasureController {
 
     @CrossOrigin
     @RequestMapping(method= RequestMethod.POST)
-    public void getLatestMeasure(@RequestBody SensorMeasures jsonObject){
+    public void getLatestMeasure(@RequestBody < jsonObject){
         //TODO: continue here...
     }
 }

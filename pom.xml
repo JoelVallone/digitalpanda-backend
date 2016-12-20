@@ -8,19 +8,21 @@
     <packaging>pom</packaging>
     <version>0.1.0</version>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>${spring.boot.version}</version>
-    </parent>
-
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-dependencies</artifactId>
+            <version>1.4.2.RELEASE</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
     <modules>
         <module>digitalpanda-backend-api</module>
         <module>digitalpanda-backend-application</module>
     </modules>
 
     <properties>
-        <spring.boot.version>1.4.2.RELEASE</spring.boot.version>
-        <exec.mvn.plugin.version>1.2.1</exec.mvn.plugin.version>
+          <org.codehaus.mojo.version>1.2.1</org.codehaus.mojo.version>
     </properties>
 </project>
