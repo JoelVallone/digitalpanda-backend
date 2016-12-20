@@ -12,10 +12,9 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="backend-application" target="1.8" />
-      <module name="digitalpanda-backend-api" target="1.5" />
-      <module name="digitalpanda-backend-application" target="1.5" />
+      <module name="digitalpanda-backend-api" target="1.8" />
+      <module name="digitalpanda-backend-application" target="1.8" />
       <module name="digitalpanda-backend-data" target="1.8" />
-      <module name="gs-rest-service" target="1.5" />
     </bytecodeTargetLevel>
   </component>
 </project>
