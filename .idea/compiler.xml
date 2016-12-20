@@ -6,11 +6,16 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="gs-rest-service" />
+        <module name="digitalpanda-backend-api" />
+        <module name="digitalpanda-backend-application" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="gs-rest-service" target="1.8" />
+      <module name="backend-application" target="1.8" />
+      <module name="digitalpanda-backend-api" target="1.8" />
+      <module name="digitalpanda-backend-application" target="1.8" />
+      <module name="digitalpanda-backend-data" target="1.8" />
+      <module name="gs-rest-service" target="1.5" />
     </bytecodeTargetLevel>
   </component>
 </project>

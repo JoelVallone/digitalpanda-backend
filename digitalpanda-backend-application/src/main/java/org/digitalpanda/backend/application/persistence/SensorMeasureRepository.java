@@ -1,7 +1,7 @@
 package org.digitalpanda.backend.application.persistence;
 
-import org.digitalpanda.backend.application.data.SensorMeasure;
-import org.digitalpanda.backend.application.data.SensorMeasureMetaData;
+import org.digitalpanda.backend.data.SensorMeasure;
+import org.digitalpanda.backend.data.SensorMeasureMetaData;
 import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;

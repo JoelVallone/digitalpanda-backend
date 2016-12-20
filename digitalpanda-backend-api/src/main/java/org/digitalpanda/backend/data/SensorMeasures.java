@@ -1,8 +1,7 @@
-package org.digitalpanda.backend.application.data;
+package org.digitalpanda.backend.data;
 
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.PriorityQueue;
 
 public class SensorMeasures {
 

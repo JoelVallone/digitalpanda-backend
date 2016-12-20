@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/digitalpanda-backend-api/digitalpanda-backend-api.iml" filepath="$PROJECT_DIR$/digitalpanda-backend-api/digitalpanda-backend-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/digitalpanda-backend-application/digitalpanda-backend-application.iml" filepath="$PROJECT_DIR$/digitalpanda-backend-application/digitalpanda-backend-application.iml" />
       <module fileurl="file://$PROJECT_DIR$/gs-rest-service.iml" filepath="$PROJECT_DIR$/gs-rest-service.iml" />
     </modules>
   </component>

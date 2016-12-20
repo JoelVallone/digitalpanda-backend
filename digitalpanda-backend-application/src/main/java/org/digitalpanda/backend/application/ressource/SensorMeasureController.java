@@ -1,9 +1,10 @@
 package org.digitalpanda.backend.application.ressource;
 
-import org.digitalpanda.backend.application.data.SensorMeasure;
-import org.digitalpanda.backend.application.data.SensorMeasureEnum;
-import org.digitalpanda.backend.application.data.SensorMeasureMetaData;
 import org.digitalpanda.backend.application.persistence.SensorMeasureRepository;
+import org.digitalpanda.backend.data.SensorMeasure;
+import org.digitalpanda.backend.data.SensorMeasureEnum;
+import org.digitalpanda.backend.data.SensorMeasureMetaData;
+import org.digitalpanda.backend.data.SensorMeasures;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +25,7 @@ public class SensorMeasureController {
 
     @CrossOrigin
     @RequestMapping(method= RequestMethod.POST)
-    public void getLatestMeasure(@RequestBody MB240Data jsonObject){
+    public void getLatestMeasure(@RequestBody SensorMeasures jsonObject){
         //TODO: continue here...
     }
 }

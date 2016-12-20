@@ -1,4 +1,4 @@
-package org.digitalpanda.backend.application.data;
+package org.digitalpanda.backend.data;
 
 public class SensorMeasure implements Comparable{
 

@@ -2,7 +2,7 @@ package org.digitalpanda.backend.application.ressource;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.digitalpanda.backend.application.data.Greeting;
+import org.digitalpanda.backend.data.Greeting;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
