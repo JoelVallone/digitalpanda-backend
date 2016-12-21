@@ -14,6 +14,7 @@
         <maven.exec.version>1.5.0</maven.exec.version>
         <org.codehaus.mojo.version>1.2.1</org.codehaus.mojo.version>
         <spring.boot.version>1.4.2.RELEASE</spring.boot.version>
+        <mockito.version>1.9.5</mockito.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
