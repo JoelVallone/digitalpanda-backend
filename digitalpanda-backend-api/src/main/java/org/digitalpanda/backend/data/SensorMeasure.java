@@ -2,9 +2,10 @@ package org.digitalpanda.backend.data;
 
 public class SensorMeasure implements Comparable{
 
-    private final long timestamp;
-    private final double measure;
+    private long timestamp;
+    private double measure;
 
+    public SensorMeasure() { this(0L, 0.0); }
     public SensorMeasure(long timestamp, double measure) {
         this.timestamp = timestamp;
         this.measure = measure;
@@ -12,6 +13,13 @@ public class SensorMeasure implements Comparable{
 
     public long getTimestamp() { return timestamp; }
     public double getMeasure() { return measure; }
+    public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+    public void setMeasure(double measure) { this.measure =  measure; }
+
+    @Override
+    public String toString(){
+        return "timestamp=" + timestamp + ", measure=" + measure;
+    }
 
     @Override
     public int compareTo(Object o) {

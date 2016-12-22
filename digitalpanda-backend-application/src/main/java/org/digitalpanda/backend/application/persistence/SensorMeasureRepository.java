@@ -15,10 +15,19 @@ public class SensorMeasureRepository {
     }
 
     public synchronized SensorMeasure getMeasure(SensorMeasureMetaData measureKey){
-        return measuresMap.get(measureKey);
+
+        System.out.print("repository.get : ");
+        SensorMeasure sensorMeasure = measuresMap.get(measureKey);
+        if(sensorMeasure != null){
+            System.out.println(measureKey + ", " + sensorMeasure);
+        }else{
+            System.out.println(measureKey + "=> no data");
+        }
+        return sensorMeasure;
     }
 
     public synchronized void setMeasure(SensorMeasureMetaData measureKey, SensorMeasure sensorMeasure){
+        System.out.println("repository.set : " + measureKey + " => " + sensorMeasure);
         measuresMap.put(measureKey, sensorMeasure);
     }
 

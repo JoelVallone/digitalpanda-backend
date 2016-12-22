@@ -2,12 +2,25 @@ package org.digitalpanda.backend.data;
 
 public class SensorMeasureMetaData {
 
-    private final String location;
-    private final SensorMeasureEnum type;
+    private String location;
+    private SensorMeasureEnum type;
+
+    public SensorMeasureMetaData() {this (null,null);}
 
     public SensorMeasureMetaData(String location, SensorMeasureEnum type) {
         this.location = location;
         this.type = type;
+    }
+
+    public String getLocation() {return location; }
+    public SensorMeasureEnum getType() { return type; }
+
+    public void setLocation(String location) { this.location = location; }
+    public void setType(SensorMeasureEnum type) { this.type = type; }
+
+    @Override
+    public String toString(){
+        return "location=" + location + ", type=" + type.name();
     }
 
     @Override

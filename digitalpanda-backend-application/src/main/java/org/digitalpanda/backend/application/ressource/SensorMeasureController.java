@@ -2,11 +2,11 @@ package org.digitalpanda.backend.application.ressource;
 
 import org.digitalpanda.backend.application.persistence.SensorMeasureRepository;
 import org.digitalpanda.backend.data.SensorMeasure;
-import org.digitalpanda.backend.data.SensorMeasureEnum;
 import org.digitalpanda.backend.data.SensorMeasureMetaData;
 import org.digitalpanda.backend.data.SensorMeasures;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/sensor")
@@ -28,6 +28,7 @@ public class SensorMeasureController {
     @CrossOrigin
     @RequestMapping(method= RequestMethod.POST)
     public void setLatestMeasure(@RequestBody SensorMeasures sensorMeasures){
+        System.out.println("/sensor POST: " + sensorMeasures);
         sensorMeasures.getMeasures().forEach(
                 (sensorMeasureMetaData, sensorMeasureList) ->
                     sensorMeasureRepository.setMeasure(
