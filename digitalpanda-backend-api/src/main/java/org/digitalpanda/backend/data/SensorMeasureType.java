@@ -1,6 +1,6 @@
 package org.digitalpanda.backend.data;
 
-public enum SensorMeasureEnum {
+public enum SensorMeasureType {
 
     TEMPERATURE("Degree Celccius", "°C"),
     HUMIDITY("Percentage", "%"),
@@ -9,7 +9,7 @@ public enum SensorMeasureEnum {
     private final String unit;
     private final String description;
 
-    SensorMeasureEnum(String description, String unit) {
+    SensorMeasureType(String description, String unit) {
         this.description = description;
         this.unit = unit;
     }

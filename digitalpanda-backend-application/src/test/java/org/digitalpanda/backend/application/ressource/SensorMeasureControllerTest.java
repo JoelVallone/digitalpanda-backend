@@ -2,7 +2,7 @@ package org.digitalpanda.backend.application.ressource;
 
 import org.digitalpanda.backend.application.persistence.SensorMeasureRepository;
 import org.digitalpanda.backend.data.SensorMeasure;
-import org.digitalpanda.backend.data.SensorMeasureEnum;
+import org.digitalpanda.backend.data.SensorMeasureType;
 import org.digitalpanda.backend.data.SensorMeasureMetaData;
 import org.digitalpanda.backend.data.SensorMeasures;
 import org.junit.Before;
@@ -12,10 +12,7 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -38,7 +35,7 @@ public class SensorMeasureControllerTest {
     @Test
     public void should_get_latest_sensor_measure() {
         //Given
-        final SensorMeasureMetaData sensorMeasureMetaData = new SensorMeasureMetaData("home", SensorMeasureEnum.HUMIDITY);
+        final SensorMeasureMetaData sensorMeasureMetaData = new SensorMeasureMetaData("home", SensorMeasureType.HUMIDITY);
         final SensorMeasure sensorMeasure = new SensorMeasure(33L,42.0);
         when(sensorMeasureRepositoryMock.getMeasure(sensorMeasureMetaData)).thenReturn(sensorMeasure);
 
@@ -57,13 +54,13 @@ public class SensorMeasureControllerTest {
         final SensorMeasure measure1 = new SensorMeasure(32L,42.0);
         final SensorMeasure measure2 = new SensorMeasure(01L,41.0);
         final List<SensorMeasure> measures = Arrays.asList(new SensorMeasure [] {measure1, measure2});
-        final SensorMeasureMetaData sensorMeasureMetaData = new SensorMeasureMetaData("home", SensorMeasureEnum.HUMIDITY);
-        final Map<SensorMeasureMetaData,List<SensorMeasure>> sensorDataMap = new HashMap<>();
-        sensorDataMap.put(sensorMeasureMetaData, measures);
-        final SensorMeasures sensorMeasures  = new SensorMeasures(sensorDataMap);
+        final SensorMeasureMetaData sensorMeasureMetaData = new SensorMeasureMetaData("home", SensorMeasureType.HUMIDITY);
+        final SensorMeasures sensorMeasures  = new SensorMeasures(sensorMeasureMetaData, measures);
+        final List<SensorMeasures> sensorMeasuresList = new ArrayList<>();
+        sensorMeasuresList.add(sensorMeasures);
 
         //Then
-        sensorMeasureController.setLatestMeasure(sensorMeasures);
+        sensorMeasureController.setLatestMeasure(sensorMeasuresList);
 
         //When
         verify(sensorMeasureRepositoryMock, times(1))

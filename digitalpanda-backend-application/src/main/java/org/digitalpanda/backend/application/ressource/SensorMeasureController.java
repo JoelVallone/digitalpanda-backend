@@ -7,6 +7,9 @@ import org.digitalpanda.backend.data.SensorMeasures;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 
 @RestController
 @RequestMapping("/sensor")
@@ -27,12 +30,12 @@ public class SensorMeasureController {
 
     @CrossOrigin
     @RequestMapping(method= RequestMethod.POST)
-    public void setLatestMeasure(@RequestBody SensorMeasures sensorMeasures){
-        System.out.println("/sensor POST: " + sensorMeasures);
-        sensorMeasures.getMeasures().forEach(
-                (sensorMeasureMetaData, sensorMeasureList) ->
+    public void setLatestMeasure(@RequestBody List<SensorMeasures> sensorMeasuresList){
+        System.out.println("/sensor POST: " + sensorMeasuresList.stream().map(SensorMeasures::toString).collect(Collectors.joining(",")));
+        sensorMeasuresList.forEach(
+                (sensorMeasures) ->
                     sensorMeasureRepository.setMeasure(
-                            sensorMeasureMetaData,
-                            sensorMeasureList.stream().max(SensorMeasure::compareTo).get()));
+                            sensorMeasures.getSensorMeasureMetaData(),
+                            sensorMeasures.getMeasures().stream().max(SensorMeasure::compareTo).get()));
     }
 }
