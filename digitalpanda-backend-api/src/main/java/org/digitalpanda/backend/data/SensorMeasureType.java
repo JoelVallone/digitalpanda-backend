@@ -2,7 +2,7 @@ package org.digitalpanda.backend.data;
 
 public enum SensorMeasureType {
 
-    TEMPERATURE("Degree Celccius", "°C"),
+    TEMPERATURE("Degree Celcius", "°C"),
     HUMIDITY("Percentage", "%"),
     PRESSURE("Hecto-Pascal","hPa");
 

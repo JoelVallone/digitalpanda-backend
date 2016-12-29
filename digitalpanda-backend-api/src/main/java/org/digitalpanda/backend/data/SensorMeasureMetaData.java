@@ -20,7 +20,7 @@ public class SensorMeasureMetaData {
 
     @Override
     public String toString(){
-        return "location=" + location + ", type=" + type.name();
+        return "location=" + location + ", type=" + (type != null ? type.name() : null);
     }
 
     @Override

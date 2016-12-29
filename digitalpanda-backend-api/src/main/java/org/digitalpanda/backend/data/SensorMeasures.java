@@ -1,7 +1,6 @@
 package org.digitalpanda.backend.data;
 
 import java.util.List;
-import java.util.Map;
 
 public class SensorMeasures {
     private SensorMeasureMetaData sensorMeasureMetaData;
