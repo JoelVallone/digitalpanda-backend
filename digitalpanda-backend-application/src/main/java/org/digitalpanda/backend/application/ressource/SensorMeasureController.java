@@ -23,6 +23,12 @@ public class SensorMeasureController {
     }
 
     @CrossOrigin
+    @RequestMapping(method= RequestMethod.GET, path="/keys")
+    public List<SensorMeasureMetaData> getMeasureKeys(){
+        return sensorMeasureRepository.getKeys();
+    }
+
+    @CrossOrigin
     @RequestMapping(method= RequestMethod.GET)
     public SensorMeasure getLatestMeasure(SensorMeasureMetaData sensorMeasureMetaData){
         return sensorMeasureRepository.getMeasure(sensorMeasureMetaData);

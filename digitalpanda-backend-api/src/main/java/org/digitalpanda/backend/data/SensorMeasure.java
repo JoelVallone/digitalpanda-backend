@@ -3,22 +3,22 @@ package org.digitalpanda.backend.data;
 public class SensorMeasure implements Comparable{
 
     private long timestamp;
-    private double measure;
+    private double value;
 
     public SensorMeasure() { this(0L, 0.0); }
-    public SensorMeasure(long timestamp, double measure) {
+    public SensorMeasure(long timestamp, double value) {
         this.timestamp = timestamp;
-        this.measure = measure;
+        this.value = value;
     }
 
     public long getTimestamp() { return timestamp; }
-    public double getMeasure() { return measure; }
+    public double getValue() { return value; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
-    public void setMeasure(double measure) { this.measure =  measure; }
+    public void setValue(double value) { this.value = value; }
 
     @Override
     public String toString(){
-        return "timestamp=" + timestamp + ", measure=" + measure;
+        return "timestamp=" + timestamp + ", value=" + value;
     }
 
     @Override

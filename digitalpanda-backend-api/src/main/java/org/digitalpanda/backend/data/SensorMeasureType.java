@@ -13,4 +13,9 @@ public enum SensorMeasureType {
         this.description = description;
         this.unit = unit;
     }
+
+    @Override
+    public String toString(){
+        return description + "[" + unit + "]";
+    }
 }
