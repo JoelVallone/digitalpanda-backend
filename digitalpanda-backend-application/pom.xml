@@ -73,15 +73,11 @@
             <version>0.1.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.hectorclient</groupId>
-            <artifactId>hector-core</artifactId>
-            <version>2.0-0</version>
-        </dependency>
+        <!-- Embedded cassandra for unit testing -->
         <dependency>
             <groupId>org.cassandraunit</groupId>
             <artifactId>cassandra-unit-spring</artifactId>
-            <version>3.5.0.1</version>
+            <version>${org.cassandraunit.version}</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -93,13 +89,7 @@
         <dependency>
             <groupId>org.cassandraunit</groupId>
             <artifactId>cassandra-unit-shaded</artifactId>
-            <version>3.5.0.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>RELEASE</version>
+            <version>${org.cassandraunit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
