@@ -1,6 +1,6 @@
 package org.digitalpanda.backend.application.ressource;
 
-import org.digitalpanda.backend.application.persistence.SensorMeasureRepository;
+import org.digitalpanda.backend.application.persistence.sensors.SensorMeasureRepository;
 import org.digitalpanda.backend.data.SensorMeasure;
 import org.digitalpanda.backend.data.SensorMeasureMetaData;
 import org.digitalpanda.backend.data.SensorMeasures;
