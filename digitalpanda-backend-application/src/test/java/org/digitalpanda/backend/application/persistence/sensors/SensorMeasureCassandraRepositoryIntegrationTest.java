@@ -11,12 +11,14 @@ import org.springframework.data.cassandra.core.cql.CqlIdentifier;
 import org.springframework.data.cassandra.core.mapping.BasicMapId;
 import org.springframework.data.cassandra.core.mapping.MapId;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Optional;
 
 import static junit.framework.TestCase.assertEquals;
 
-public class SensorMeasureRepositoryIntegrationTest extends CassandraWithSpringBaseTest {
+public class SensorMeasureCassandraRepositoryIntegrationTest extends CassandraWithSpringBaseTest {
 
     @Autowired
     CassandraAdminOperations adminTemplate;
@@ -35,7 +37,7 @@ public class SensorMeasureRepositoryIntegrationTest extends CassandraWithSpringB
         SensorMeasureDao sensorMeasureDao = new SensorMeasureDao();
         sensorMeasureDao.setLocation("SomewhereNearMyComputer");
         sensorMeasureDao.setDay("2018-09-08");
-        sensorMeasureDao.setTimestamp("1536391282793");
+        sensorMeasureDao.setTimestamp(Date.from(Instant.ofEpochMilli(1536391282793L)));
         sensorMeasureDao.setMeasureType(SensorMeasureType.HUMIDITY.name());
         sensorMeasureDao.setMeasureValue(42.3);
 

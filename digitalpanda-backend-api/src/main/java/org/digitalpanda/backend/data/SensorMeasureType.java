@@ -18,4 +18,12 @@ public enum SensorMeasureType {
     public String toString(){
         return description + "[" + unit + "]";
     }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public String getDescription() {
+        return description;
+    }
 }

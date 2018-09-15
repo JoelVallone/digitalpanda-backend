@@ -6,12 +6,16 @@ import org.springframework.data.cassandra.core.mapping.Column;
 import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
 import org.springframework.data.cassandra.core.mapping.Table;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Objects;
 
-@Table(SensorMeasureDao.SENSOR_MEASURE_TABLE_NAME)
+@Table(SensorMeasureDao.SENSOR_MEASURE_TABLE_NAME) //Record size rough estimation : 100 Bytes
 public class SensorMeasureDao {
 
     public static final String SENSOR_MEASURE_TABLE_NAME = "sensor_measure";
+    public static final int SENSOR_MEASURE_DEFAULT_BUCKET_ID = 0;
+    public static final SimpleDateFormat DATE_DAY = new SimpleDateFormat("yyyy-MM-dd");
 
     @PrimaryKeyColumn(name = "location", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private String location; //text
@@ -23,7 +27,7 @@ public class SensorMeasureDao {
     private int bucket = 0; //int
 
     @PrimaryKeyColumn(name = "timestamp", ordinal = 2, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.ASCENDING)
-    private String timestamp; //timeuuid
+    private Date timestamp; //timeuuid
 
     @Column
     private String measureType; //text
@@ -55,11 +59,11 @@ public class SensorMeasureDao {
         this.bucket = bucket;
     }
 
-    public String getTimestamp() {
+    public Date getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
     }
 

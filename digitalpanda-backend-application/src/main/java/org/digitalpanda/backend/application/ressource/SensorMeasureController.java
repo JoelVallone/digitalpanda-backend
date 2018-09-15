@@ -31,8 +31,10 @@ public class SensorMeasureController {
     @CrossOrigin
     @RequestMapping(method= RequestMethod.GET)
     public SensorMeasure getLatestMeasure(SensorMeasureMetaData sensorMeasureMetaData){
-        return sensorMeasureRepository.getMeasure(sensorMeasureMetaData);
+        return sensorMeasureRepository.getLatestMeasure(sensorMeasureMetaData);
     }
+
+    //FIXME: Add endpoint to retrieve a list of measures between time intervals (MeasureTypesList, location, startDate, endDate).
 
     @CrossOrigin
     @RequestMapping(method= RequestMethod.POST)

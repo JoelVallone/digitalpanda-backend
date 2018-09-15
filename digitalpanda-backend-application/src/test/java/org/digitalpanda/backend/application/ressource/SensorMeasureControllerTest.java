@@ -37,14 +37,14 @@ public class SensorMeasureControllerTest {
         //Given
         final SensorMeasureMetaData sensorMeasureMetaData = new SensorMeasureMetaData("home", SensorMeasureType.HUMIDITY);
         final SensorMeasure sensorMeasure = new SensorMeasure(33L,42.0);
-        when(sensorMeasureRepositoryMock.getMeasure(sensorMeasureMetaData)).thenReturn(sensorMeasure);
+        when(sensorMeasureRepositoryMock.getLatestMeasure(sensorMeasureMetaData)).thenReturn(sensorMeasure);
 
         //When
         SensorMeasure actual = sensorMeasureController.getLatestMeasure(sensorMeasureMetaData);
 
         //Then
         verify(sensorMeasureRepositoryMock, times(1))
-                .getMeasure(Matchers.eq(sensorMeasureMetaData));
+                .getLatestMeasure(Matchers.eq(sensorMeasureMetaData));
         assertEquals(actual,sensorMeasure);
     }
 

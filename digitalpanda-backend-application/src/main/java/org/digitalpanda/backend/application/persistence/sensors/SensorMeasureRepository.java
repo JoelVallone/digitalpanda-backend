@@ -5,31 +5,25 @@ import org.digitalpanda.backend.data.SensorMeasureMetaData;
 import org.digitalpanda.backend.data.SensorMeasureType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.CassandraOperations;
-import org.springframework.data.cassandra.core.mapping.MapId;
-import org.springframework.data.cassandra.repository.CassandraRepository;
-import org.springframework.data.cassandra.repository.MapIdCassandraRepository;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 /*
  https://docs.spring.io/spring-data/cassandra/docs/2.0.9.RELEASE/reference/html/
  https://www.baeldung.com/spring-data-cassandratemplate-cqltemplate
     See query derivation,
  */
-
+//FIXME: Write integration test with embedded cassandra
 @Repository
 public class SensorMeasureRepository {
 
 
-    //FIXME: Integrate SensorMeasureRepository with Cassandra DB
     @Autowired
     private CassandraOperations cassandraTemplate; //Used for advanced queries
+
     @Autowired
     private SensorMeasureCassandraRepository sensorMeasureCassandraRepository; //used for CRUD queries
 
@@ -39,7 +33,7 @@ public class SensorMeasureRepository {
         this.latestMeasures = new HashMap<>();
     }
 
-    public synchronized SensorMeasure getMeasure(SensorMeasureMetaData measureKey){
+    public synchronized SensorMeasure getLatestMeasure(SensorMeasureMetaData measureKey){
 
         System.out.print("repository.get : ");
         SensorMeasure sensorMeasure = latestMeasures.get(measureKey);
@@ -72,6 +66,8 @@ public class SensorMeasureRepository {
     public synchronized void setMeasure(SensorMeasureMetaData measureKey, SensorMeasure sensorMeasure){
         System.out.println("repository.set : " + measureKey + " => " + sensorMeasure);
         latestMeasures.put(measureKey, sensorMeasure);
+        sensorMeasureCassandraRepository.save(
+                SensorMeasureDaoHelper.toDao(measureKey, sensorMeasure));
     }
 }
 
@@ -89,6 +85,8 @@ public class SensorMeasureRepository {
  *  -> interval of values  at second, minute, hour, day precisions/average
  * Cassandra table layout :
  *
+ * //Query all buckets to scale when input to read is too big per partition => combine DB data in the backend code
+ * 100 Bytes per record, 1 record each second, n measureType => n*8.25 MB
  * CREATE TABLE  sensor_measure (
  *     location text,
  *     day text,
@@ -102,20 +100,11 @@ public class SensorMeasureRepository {
  *                        'compaction_window_unit': 'DAYS',
  *                        'compaction_window_size': 1};
  *
- * example (query all buckets to scale when input to read is too big per partition => combine DB data in the backend code)
- * CREATE TABLE tweet_stream (
- *     account text,
- *     day text,
- *     bucket int,
- *     ts timeuuid,
- *     message text,
- *     primary key((account, day, bucket), ts)
- * ) WITH CLUSTERING ORDER BY (ts DESC)
- *          AND COMPACTION = {'class': 'TimeWindowCompactionStrategy',
- *                        'compaction_window_unit': 'DAYS',
- *                        'compaction_window_size': 1};
  *   pond.js => time series processing
  *   react-time series => time series plot
  *
- *
+ *   ==> If 5 sensors with 2 measureType each
+ *      => partition size (1 bucket) 16.5 MB
+ *      => Total data per day: 82.5 MB
+ *      => Total data per year: ~30 GB
  */
