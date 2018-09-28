@@ -10,29 +10,29 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 
-@Table(SensorMeasureDao.SENSOR_MEASURE_TABLE_NAME) //Record size rough estimation : 100 Bytes
+//@Table(SensorMeasureDao.SENSOR_MEASURE_LATEST_TABLE_NAME) //Record max size rough estimation : 100 Bytes
 public class SensorMeasureDao {
 
-    public static final String SENSOR_MEASURE_TABLE_NAME = "sensor_measure";
+    public static final String SENSOR_MEASURE_LATEST_TABLE_NAME = "sensor_measure_latest";
     public static final int SENSOR_MEASURE_DEFAULT_BUCKET_ID = 0;
     public static final SimpleDateFormat DATE_DAY = new SimpleDateFormat("yyyy-MM-dd");
 
-    @PrimaryKeyColumn(name = "location", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
+    //@PrimaryKeyColumn(name = "location", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private String location; //text
 
-    @PrimaryKeyColumn(name = "day", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+    //@PrimaryKeyColumn(name = "day", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
     private String day; //text
 
-    @PrimaryKeyColumn(name = "bucket", ordinal = 2, type = PrimaryKeyType.PARTITIONED)
+    //@PrimaryKeyColumn(name = "bucket", ordinal = 2, type = PrimaryKeyType.PARTITIONED)
     private int bucket = 0; //int
 
-    @PrimaryKeyColumn(name = "timestamp", ordinal = 2, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.ASCENDING)
-    private Date timestamp; //timeuuid
+    //@Column
+    private Date timestamp; //time
 
-    @Column
+    //@Column
     private String measureType; //text
 
-    @Column
+    //@Column
     private double measureValue; //text
 
     public String getLocation() {

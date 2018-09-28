@@ -1,6 +1,8 @@
 package org.digitalpanda.backend.data;
 
-public class SensorMeasure implements Comparable{
+import java.util.Objects;
+
+public class SensorMeasure implements Comparable {
 
     private long timestamp;
     private double value;

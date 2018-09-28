@@ -7,37 +7,36 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /*
  https://docs.spring.io/spring-data/cassandra/docs/2.0.9.RELEASE/reference/html/
  https://www.baeldung.com/spring-data-cassandratemplate-cqltemplate
-    See query derivation,
+    See query derivation,SensorMeasureRepository
  */
 //FIXME: Write integration test with embedded cassandra
 @Repository
 public class SensorMeasureRepository {
 
-
     @Autowired
     private CassandraOperations cassandraTemplate; //Used for advanced queries
 
     @Autowired
-    private SensorMeasureCassandraRepository sensorMeasureCassandraRepository; //used for CRUD queries
+    private SensorMeasureCassandraRepository sensorMeasureCassandraRepository; //Available for CRUD queries
 
-    private HashMap<SensorMeasureMetaData, SensorMeasure> latestMeasures;
+    private Map<SensorMeasureMetaData, SensorMeasure> latestMeasures;
 
     public SensorMeasureRepository() {
-        this.latestMeasures = new HashMap<>();
+        this.latestMeasures = new ConcurrentHashMap<>();
+        updateCache();
     }
 
-    public synchronized SensorMeasure getLatestMeasure(SensorMeasureMetaData measureKey){
 
+    //TODO: second-periodic sensor measure cache update => Allows sensor value read scale-out
+    public SensorMeasure getLatestMeasure(SensorMeasureMetaData measureKey) {
         System.out.print("repository.get : ");
         SensorMeasure sensorMeasure = latestMeasures.get(measureKey);
-        //SensorMeasure sensorMeasure = generateDummyMeasure(measureKey);
         if(sensorMeasure != null){
             System.out.println(measureKey + ", " + sensorMeasure);
         }else{
@@ -46,28 +45,34 @@ public class SensorMeasureRepository {
         return sensorMeasure;
     }
 
-    public synchronized List<SensorMeasureMetaData> getKeys(){
+    public List<SensorMeasureMetaData> getKeys(){
         System.out.println("repository.getKeys : ");
         return new ArrayList<>(latestMeasures.keySet());
-        //return getDummyMeasureKeys();
     }
 
-    private List<SensorMeasureMetaData> getDummyMeasureKeys(){
-        List<SensorMeasureMetaData> keyList = new ArrayList<>();
-        keyList.add(new SensorMeasureMetaData("indoor", SensorMeasureType.TEMPERATURE));
-        keyList.add(new SensorMeasureMetaData("indoor", SensorMeasureType.PRESSURE));
-        keyList.add(new SensorMeasureMetaData("outdoor", SensorMeasureType.TEMPERATURE));
-        return keyList;
-    }
-    private SensorMeasure generateDummyMeasure(SensorMeasureMetaData measureKey) {
-        return new SensorMeasure(System.currentTimeMillis(), Math.random());
+    void flushCache() {
+        latestMeasures = new ConcurrentHashMap<>();
     }
 
-    public synchronized void setMeasure(SensorMeasureMetaData measureKey, SensorMeasure sensorMeasure){
+    public void setMeasure(SensorMeasureMetaData measureKey, SensorMeasure sensorMeasure){
         System.out.println("repository.set : " + measureKey + " => " + sensorMeasure);
+
         latestMeasures.put(measureKey, sensorMeasure);
+
+        //TODO: Async update to latest measure table and append to history table
         sensorMeasureCassandraRepository.save(
                 SensorMeasureDaoHelper.toDao(measureKey, sensorMeasure));
+    }
+
+    //TODO: second-periodic sensor measure cache update => Allows sensor value read scale-out
+    public void updateCache(){
+        //FIXME : Warm-up in-memory cache by calling:
+        // SELECT * FROM sensor_measure_latest WHERE location = ??? AND measureType = ???
+    }
+
+    //TODO : getMeasuresAtLocation()
+    public List<SensorMeasureDao> getMeasuresAtLocation(String location, Date beginInc, Date endExcl) {
+        return Collections.emptyList();
     }
 }
 
@@ -92,7 +97,7 @@ public class SensorMeasureRepository {
  *     day text,
  *     bucket int,
  *     measureType text,
- *     ts timeuuid,
+ *     ts timestamp,
  *     measureValue float,
  *     primary key((location, day, bucket), ts)
  * ) WITH CLUSTERING ORDER BY (ts DESC)

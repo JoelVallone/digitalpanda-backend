@@ -29,7 +29,7 @@ public class SensorMeasureCassandraRepositoryIntegrationTest extends CassandraWi
     @Before
     public void createTable() {
         adminTemplate.createTable(
-                true, CqlIdentifier.of(SensorMeasureDao.SENSOR_MEASURE_TABLE_NAME), SensorMeasureDao.class, new HashMap<>());
+                true, CqlIdentifier.of(SensorMeasureDao.SENSOR_MEASURE_LATEST_TABLE_NAME), SensorMeasureDao.class, new HashMap<>());
     }
 
     @Test
@@ -56,6 +56,6 @@ public class SensorMeasureCassandraRepositoryIntegrationTest extends CassandraWi
 
     @After
     public void dropTable() {
-        adminTemplate.dropTable(CqlIdentifier.of(SensorMeasureDao.SENSOR_MEASURE_TABLE_NAME));
+        adminTemplate.dropTable(CqlIdentifier.of(SensorMeasureDao.SENSOR_MEASURE_LATEST_TABLE_NAME));
     }
 }

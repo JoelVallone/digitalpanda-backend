@@ -2,9 +2,12 @@ package org.digitalpanda.backend.application.persistence.sensors;
 
 import org.digitalpanda.backend.data.SensorMeasure;
 import org.digitalpanda.backend.data.SensorMeasureMetaData;
+import org.springframework.data.cassandra.core.mapping.BasicMapId;
+import org.springframework.data.cassandra.core.mapping.MapId;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.Optional;
 
 public class SensorMeasureDaoHelper {
 
@@ -22,6 +25,15 @@ public class SensorMeasureDaoHelper {
         dao.setMeasureValue(sensorMeasure.getValue());
 
         return dao;
+    }
+
+    public static MapId buildMap(SensorMeasureMetaData measureKey, Long timestamp){
+        MapId id = new BasicMapId();
+        id.put("location", measureKey.getLocation());
+        id.put("day", extractDateDay(toDate(timestamp)));
+        id.put("bucket", 0);
+        id.put("timestamp", timestamp);
+        return id;
     }
 
     private static String extractDateDay(Date sampleDate){

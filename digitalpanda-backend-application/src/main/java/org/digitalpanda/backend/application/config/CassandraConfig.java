@@ -12,9 +12,10 @@ import java.util.List;
 @EnableCassandraRepositories("org.digitalpanda.backend.application.persistence.sensors")
 public class CassandraConfig extends AbstractCassandraConfiguration {
 
+    public static final String APP_KEYSPACE = "iot";
     @Override
     protected String getKeyspaceName() {
-        return "iot";
+        return APP_KEYSPACE;
     }
 
     public String[] getEntityBasePackages() {
