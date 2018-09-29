@@ -1,8 +1,9 @@
 package org.digitalpanda.backend.application.persistence.sensors;
 
+import org.digitalpanda.backend.application.persistence.sensors.latest.SensorMeasureLatestCassandraRepository;
+import org.digitalpanda.backend.application.persistence.sensors.latest.SensorMeasureLatestDao;
 import org.digitalpanda.backend.data.SensorMeasure;
 import org.digitalpanda.backend.data.SensorMeasureMetaData;
-import org.digitalpanda.backend.data.SensorMeasureType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.stereotype.Repository;
@@ -23,7 +24,7 @@ public class SensorMeasureRepository {
     private CassandraOperations cassandraTemplate; //Used for advanced queries
 
     @Autowired
-    private SensorMeasureCassandraRepository sensorMeasureCassandraRepository; //Available for CRUD queries
+    private SensorMeasureLatestCassandraRepository sensorMeasureLatestCassandraRepository; //Available for CRUD queries
 
     private Map<SensorMeasureMetaData, SensorMeasure> latestMeasures;
 
@@ -60,8 +61,8 @@ public class SensorMeasureRepository {
         latestMeasures.put(measureKey, sensorMeasure);
 
         //TODO: Async update to latest measure table and append to history table
-        sensorMeasureCassandraRepository.save(
-                SensorMeasureDaoHelper.toDao(measureKey, sensorMeasure));
+        sensorMeasureLatestCassandraRepository.save(
+                SensorMeasureDaoHelper.toLatestMeasureDao(measureKey, sensorMeasure));
     }
 
     //TODO: second-periodic sensor measure cache update => Allows sensor value read scale-out
@@ -71,7 +72,7 @@ public class SensorMeasureRepository {
     }
 
     //TODO : getMeasuresAtLocation()
-    public List<SensorMeasureDao> getMeasuresAtLocation(String location, Date beginInc, Date endExcl) {
+    public List<SensorMeasureLatestDao> getMeasuresAtLocation(String location, Date beginInc, Date endExcl) {
         return Collections.emptyList();
     }
 }

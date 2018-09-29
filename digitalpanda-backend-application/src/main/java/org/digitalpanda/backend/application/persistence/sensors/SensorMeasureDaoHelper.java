@@ -1,5 +1,6 @@
 package org.digitalpanda.backend.application.persistence.sensors;
 
+import org.digitalpanda.backend.application.persistence.sensors.latest.SensorMeasureLatestDao;
 import org.digitalpanda.backend.data.SensorMeasure;
 import org.digitalpanda.backend.data.SensorMeasureMetaData;
 import org.springframework.data.cassandra.core.mapping.BasicMapId;
@@ -7,17 +8,15 @@ import org.springframework.data.cassandra.core.mapping.MapId;
 
 import java.time.Instant;
 import java.util.Date;
-import java.util.Optional;
 
 public class SensorMeasureDaoHelper {
 
-    public static SensorMeasureDao toDao(SensorMeasureMetaData measureKey, SensorMeasure sensorMeasure){
-        SensorMeasureDao dao = new SensorMeasureDao();
+
+    public static SensorMeasureLatestDao toLatestMeasureDao(SensorMeasureMetaData measureKey, SensorMeasure sensorMeasure){
+        SensorMeasureLatestDao dao = new SensorMeasureLatestDao();
         Date sampleDate = toDate(sensorMeasure.getTimestamp());
 
         dao.setLocation(measureKey.getLocation());
-        dao.setDay(extractDateDay(sampleDate));
-        dao.setBucket(SensorMeasureDao.SENSOR_MEASURE_DEFAULT_BUCKET_ID);
 
         dao.setTimestamp(sampleDate);
 
@@ -37,7 +36,7 @@ public class SensorMeasureDaoHelper {
     }
 
     private static String extractDateDay(Date sampleDate){
-        return SensorMeasureDao.DATE_DAY.format(sampleDate);
+        return SensorMeasureLatestDao.DATE_DAY.format(sampleDate);
     }
 
     private static Date toDate(long timeMillisSinceEpoch){
