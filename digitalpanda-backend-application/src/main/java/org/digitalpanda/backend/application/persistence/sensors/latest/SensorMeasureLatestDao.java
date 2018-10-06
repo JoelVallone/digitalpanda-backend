@@ -19,7 +19,7 @@ public class SensorMeasureLatestDao {
     @PrimaryKeyColumn(name = "location", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private String location; //text
 
-    @PrimaryKeyColumn(name = "day", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(name = "measureType", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
     private String measureType; //text
 
     @Column

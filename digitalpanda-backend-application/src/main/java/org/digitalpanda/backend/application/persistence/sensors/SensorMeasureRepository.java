@@ -4,50 +4,59 @@ import org.digitalpanda.backend.application.persistence.sensors.latest.SensorMea
 import org.digitalpanda.backend.application.persistence.sensors.latest.SensorMeasureLatestDao;
 import org.digitalpanda.backend.data.SensorMeasure;
 import org.digitalpanda.backend.data.SensorMeasureMetaData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.CassandraOperations;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static org.digitalpanda.backend.application.persistence.sensors.SensorMeasureDaoHelper.primaryKeyForLatestMeasure;
 
 /*
  https://docs.spring.io/spring-data/cassandra/docs/2.0.9.RELEASE/reference/html/
  https://www.baeldung.com/spring-data-cassandratemplate-cqltemplate
     See query derivation,SensorMeasureRepository
  */
-//FIXME: Write integration test with embedded cassandra
 @Repository
 public class SensorMeasureRepository {
+
+    private Logger logger =  LoggerFactory.getLogger(SensorMeasureRepository.class);
 
     @Autowired
     private CassandraOperations cassandraTemplate; //Used for advanced queries
 
     @Autowired
-    private SensorMeasureLatestCassandraRepository sensorMeasureLatestCassandraRepository; //Available for CRUD queries
+    private SensorMeasureLatestCassandraRepository sensorMeasureLatestRepo; //Available for CRUD queries
 
     private Map<SensorMeasureMetaData, SensorMeasure> latestMeasures;
 
     public SensorMeasureRepository() {
         this.latestMeasures = new ConcurrentHashMap<>();
-        updateCache();
     }
 
-
-    //TODO: second-periodic sensor measure cache update => Allows sensor value read scale-out
     public SensorMeasure getLatestMeasure(SensorMeasureMetaData measureKey) {
-        System.out.print("repository.get : ");
-        SensorMeasure sensorMeasure = latestMeasures.get(measureKey);
-        if(sensorMeasure != null){
-            System.out.println(measureKey + ", " + sensorMeasure);
-        }else{
-            System.out.println(measureKey + "=> no data");
+        if(!latestMeasures.containsKey(measureKey)){
+            logger.debug("Cache miss, try read \"" + measureKey + "\"from DB");
+            updateCache(measureKey);
         }
+        SensorMeasure sensorMeasure = latestMeasures.get(measureKey);
+
+        if (sensorMeasure != null) {
+            logger.debug(measureKey + ", " + sensorMeasure);
+        } else {
+            logger.debug(measureKey + "=> no data");
+        }
+
         return sensorMeasure;
     }
 
     public List<SensorMeasureMetaData> getKeys(){
-        System.out.println("repository.getKeys : ");
+        logger.debug("repository.getKeys : ");
         return new ArrayList<>(latestMeasures.keySet());
     }
 
@@ -56,19 +65,31 @@ public class SensorMeasureRepository {
     }
 
     public void setMeasure(SensorMeasureMetaData measureKey, SensorMeasure sensorMeasure){
-        System.out.println("repository.set : " + measureKey + " => " + sensorMeasure);
-
+        logger.debug("repository.set : " + measureKey + " => " + sensorMeasure);
         latestMeasures.put(measureKey, sensorMeasure);
+        CompletableFuture.runAsync(() ->
+                sensorMeasureLatestRepo.save(
+                    SensorMeasureDaoHelper.toLatestMeasureDao(measureKey, sensorMeasure)));
 
-        //TODO: Async update to latest measure table and append to history table
-        sensorMeasureLatestCassandraRepository.save(
-                SensorMeasureDaoHelper.toLatestMeasureDao(measureKey, sensorMeasure));
     }
 
-    //TODO: second-periodic sensor measure cache update => Allows sensor value read scale-out
-    public void updateCache(){
-        //FIXME : Warm-up in-memory cache by calling:
-        // SELECT * FROM sensor_measure_latest WHERE location = ??? AND measureType = ???
+    @Scheduled(fixedDelayString = "${digitalpanda.sensorMeasureRepository.cacheRefreshRate.ms}")
+    void updateCache(){
+        sensorMeasureLatestRepo
+                .findAll().stream()
+                .map(SensorMeasureDaoHelper::toSensorMeasure)
+                .forEach( p -> latestMeasures.put(p.getFirst(),p.getSecond()));
+    }
+
+    private void updateCache(SensorMeasureMetaData measureKey){
+        sensorMeasureLatestRepo
+                .findById(primaryKeyForLatestMeasure(measureKey))
+                .map(SensorMeasureDaoHelper::toSensorMeasure)
+                .ifPresent(p -> latestMeasures.put(p.getFirst(),p.getSecond()));
+    }
+
+    void clearCache(){
+        latestMeasures.clear();
     }
 
     //TODO : getMeasuresAtLocation()
@@ -77,7 +98,7 @@ public class SensorMeasureRepository {
     }
 }
 
-/**
+/*
  * Measure as time series:  location, type, timestamp, value
  * > ssh pi@192.168.0.211
  * data format (csv):

@@ -26,30 +26,28 @@ public class SensorMeasureRepositoryIntegrationTest extends CassandraWithSpringB
     private static final SensorMeasure TEST_INITIAL_VALUE = new SensorMeasure(System.currentTimeMillis(), 1.42);
 
     @Autowired
-    CassandraAdminOperations adminTemplate;
+    private CassandraAdminOperations adminTemplate;
 
     @Autowired
-    SensorMeasureRepository repository;
+    private SensorMeasureRepository repository;
 
     @Before
     public void createTable() {
         adminTemplate.createTable(
                 true, CqlIdentifier.of(SensorMeasureLatestDao.SENSOR_MEASURE_LATEST_TABLE_NAME), SensorMeasureLatestDao.class, new HashMap<>());
         externalUpdate(TEST_PRIMARY_KEY, TEST_INITIAL_VALUE);
+        repository.clearCache();
     }
 
     @Test
-    public void should_coldReadThenUpdateCacheThenAvailableRead() {
-        //Given
-        long now = System.currentTimeMillis();
-
-        //When
+    public void should_coldReadThenHotRead() {
+        //Given, When
         SensorMeasure actualCold = repository.getLatestMeasure(TEST_PRIMARY_KEY);
-        repository.updateCache();
         SensorMeasure actualHot = repository.getLatestMeasure(TEST_PRIMARY_KEY);
 
         //Then
-        assertNull(actualCold);
+        assertEquals(TEST_INITIAL_VALUE.getTimestamp(), actualCold.getTimestamp());
+        assertEquals(TEST_INITIAL_VALUE.getValue(), actualCold.getValue());
         assertEquals(TEST_INITIAL_VALUE.getTimestamp(), actualHot.getTimestamp());
         assertEquals(TEST_INITIAL_VALUE.getValue(), actualHot.getValue());
     }
