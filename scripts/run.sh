@@ -12,3 +12,4 @@ fi
 
 pkill -f .*backend.*.jar || true
 java -jar "${SCRIPT_FOLDER}/../digitalpanda-backend-application/target/"*backend*.jar &> ${SCRIPT_FOLDER}/../backend.log &
+echo "Started backend with PID=$! logs available at: ${SCRIPT_FOLDER}/../backend.log"
