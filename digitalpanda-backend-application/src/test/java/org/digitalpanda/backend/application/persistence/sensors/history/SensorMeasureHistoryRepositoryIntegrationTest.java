@@ -6,7 +6,6 @@ import org.digitalpanda.backend.application.util.Pair;
 import org.digitalpanda.backend.data.SensorMeasureType;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.CassandraAdminOperations;
@@ -17,10 +16,12 @@ import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 import static junit.framework.TestCase.assertEquals;
-import static org.digitalpanda.backend.application.persistence.sensors.SensorMeasureDaoHelper.getTimeBlockId;
+import static org.digitalpanda.backend.application.persistence.sensors.SensorMeasureDaoHelper.getHistoricalMeasureBlockId;
 
 public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWithSpringBaseTest {
 
+    private static final SensorMeasureType TARGET_MEASURE_TYPE = SensorMeasureType.TEMPERATURE;
+    private static final AggregateType TARGET_AGGREGATE_TYPE = AggregateType.AVG;
     private static final HistoricalDataStorageSizing TARGET_HISTORICAL_DATA_SIZING = HistoricalDataStorageSizing.SECOND_PRECISION_RAW;
     private static final String TEST_LOCATION = "SomewhereNearMyComputer";
 
@@ -39,7 +40,6 @@ public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWith
     }
 
     @Test
-    @Ignore //FIXME : remove ignore once implemented
     public void shouldInsertAndFindEntity() throws Exception {
         //Given
         //  => Data in table partition 1
@@ -48,7 +48,9 @@ public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWith
                 new Pair<>(dateFirstElementFirstPartition, 1.14159)));
         //  => Data in table partition 2
         Date dateFirstElementSecondPartition = new Date(
-                (getTimeBlockId(dateFirstElementFirstPartition, TARGET_HISTORICAL_DATA_SIZING) + 1) * 1000L);
+                (getHistoricalMeasureBlockId(dateFirstElementFirstPartition, TARGET_HISTORICAL_DATA_SIZING) + 1)
+                        * TARGET_HISTORICAL_DATA_SIZING.getTimeBlockPeriodSeconds()
+                        * 1000L);
         Date dateSecondElementSecondPartition = new Date(
                 dateFirstElementSecondPartition.getTime() + 1000L);
         List<SensorMeasureHistoryDao> secondPartition = measureSequence(Arrays.asList(
@@ -63,6 +65,9 @@ public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWith
         List<SensorMeasureHistoryDao> actual = repository
                 .getMeasuresAtLocationWithInterval(
                     TEST_LOCATION,
+                    TARGET_MEASURE_TYPE,
+                    TARGET_AGGREGATE_TYPE,
+                    TARGET_HISTORICAL_DATA_SIZING,
                     dateFirstElementFirstPartition,
                     dateFirstElementSecondPartition);
 
@@ -79,11 +84,11 @@ public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWith
                     dao.setLocation(TEST_LOCATION); //Partition field
                     Date measureDate = timestampedMeasure.getFirst();
                     dao.setTimeBlockPeriodSeconds(TARGET_HISTORICAL_DATA_SIZING.getTimeBlockPeriodSeconds()); //Partition field
-                    dao.setTimeBlockId(getTimeBlockId(measureDate, TARGET_HISTORICAL_DATA_SIZING)); //Partition field
+                    dao.setTimeBlockId(getHistoricalMeasureBlockId(measureDate, TARGET_HISTORICAL_DATA_SIZING)); //Partition field
+                    dao.setMeasureType(TARGET_MEASURE_TYPE.name()); //Partition field
+                    dao.setAggregateType(TARGET_AGGREGATE_TYPE.name()); //Partition field
                     dao.setBucket(SensorMeasureHistoryDao.SENSOR_MEASURE_DEFAULT_BUCKET_ID); //Partition field
                     dao.setTimestamp(measureDate);//Clustering field
-                    dao.setMeasureType(SensorMeasureType.TEMPERATURE.name());
-                    dao.setAggregateType(AggregateType.AVG.name());
                     dao.setValue(timestampedMeasure.getSecond());
                     return dao;
                 }).collect(toList());

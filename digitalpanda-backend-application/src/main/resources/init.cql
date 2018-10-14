@@ -14,14 +14,14 @@ AND replication = { 'replication_factor' : 1, 'class' : 'SimpleStrategy' };
 */
 CREATE TABLE IF NOT EXISTS iot.sensor_measure_history (
     location text,
-    timeBlockPeriodSeconds bigint,
-    timeBlockId bigint,
-    measureType text,
-    aggregateType text,
+    time_block_period_seconds bigint,
+    time_block_id bigint,
+    measure_type text,
+    aggregate_type text,
     bucket int,
     timestamp timestamp,
     value double,
-    primary key((location, timeBlockPeriodSeconds, timeBlockId, measureType, aggregateType, bucket), timestamp)
+    primary key((location, time_block_period_seconds, time_block_id, measure_type, aggregate_type, bucket), timestamp)
 ) WITH CLUSTERING ORDER BY (timestamp DESC)
          AND COMPACTION = {'class': 'TimeWindowCompactionStrategy',
                        'compaction_window_unit': 'DAYS',
@@ -36,9 +36,9 @@ CREATE TABLE IF NOT EXISTS iot.sensor_measure_history (
 */
 CREATE TABLE IF NOT EXISTS iot.sensor_measure_latest (
    location text,
-   measureType text,
+   measure_type text,
    timestamp timestamp,
-   measureValue double,
-   primary key((location), measureType)
+   value double,
+   primary key((location), measure_type)
 ) WITH COMPACTION = {'class': 'LeveledCompactionStrategy',
                       'tombstone_compaction_interval': '14400'};

@@ -114,7 +114,7 @@ public class SensorMeasureLatestRepositoryIntegrationTest extends CassandraWithS
         SensorMeasureLatestDao dao = new SensorMeasureLatestDao();
         dao.setLocation(key.getLocation());
         dao.setMeasureType(key.getType().name());
-        dao.setMeasureValue(measure.getValue());
+        dao.setValue(measure.getValue());
         dao.setTimestamp(new Date(measure.getTimestamp()));
 
         adminTemplate.insert(dao);

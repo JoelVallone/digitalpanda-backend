@@ -38,7 +38,7 @@ public class SensorMeasureLatestRepositoryCRUDIntegrationTest extends CassandraW
         sensorMeasureLatestDao.setLocation("SomewhereNearMyComputer");
         sensorMeasureLatestDao.setTimestamp(Date.from(Instant.ofEpochMilli(1536391282793L)));
         sensorMeasureLatestDao.setMeasureType(SensorMeasureType.HUMIDITY.name());
-        sensorMeasureLatestDao.setMeasureValue(42.3);
+        sensorMeasureLatestDao.setValue(42.3);
 
         repository.save(sensorMeasureLatestDao);
 

@@ -14,25 +14,25 @@ public class SensorMeasureHistoryDao {
     public static final String SENSOR_MEASURE_HISTORY_TABLE_NAME = "sensor_measure_history";
     public static final int SENSOR_MEASURE_DEFAULT_BUCKET_ID = 0;
 
-    @PrimaryKeyColumn(ordinal = 0, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(name = "location", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private String location;
 
-    @PrimaryKeyColumn(ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(name = "time_block_period_seconds", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
     private Long timeBlockPeriodSeconds;
 
-    @PrimaryKeyColumn(ordinal = 2, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(name = "time_block_id", ordinal = 2, type = PrimaryKeyType.PARTITIONED)
     private Long timeBlockId;
 
-    @PrimaryKeyColumn(ordinal = 3, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(name = "measure_type", ordinal = 3, type = PrimaryKeyType.PARTITIONED)
     private String measureType;
 
-    @PrimaryKeyColumn(ordinal = 4, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(name = "aggregate_type", ordinal = 4, type = PrimaryKeyType.PARTITIONED)
     private String aggregateType;
 
-    @PrimaryKeyColumn(ordinal = 5, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(name = "bucket", ordinal = 5, type = PrimaryKeyType.PARTITIONED)
     private Integer bucket;
 
-    @PrimaryKeyColumn(ordinal = 6, type = PrimaryKeyType.CLUSTERED)
+    @PrimaryKeyColumn(name = "timestamp", ordinal = 6, type = PrimaryKeyType.CLUSTERED)
     private Date timestamp;
 
     @Column

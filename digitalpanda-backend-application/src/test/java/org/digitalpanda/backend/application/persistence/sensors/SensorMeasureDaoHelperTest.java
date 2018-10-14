@@ -23,7 +23,7 @@ public class SensorMeasureDaoHelperTest {
         assertEquals("aLocation", actual.getLocation());
         assertEquals(1535718586193L, actual.getTimestamp().toInstant().toEpochMilli());
         assertEquals(SensorMeasureType.TEMPERATURE.getUnit(), actual.getMeasureType());
-        assertEquals(42.404, actual.getMeasureValue(), 0.001);
+        assertEquals(42.404, actual.getValue(), 0.001);
     }
 
 }

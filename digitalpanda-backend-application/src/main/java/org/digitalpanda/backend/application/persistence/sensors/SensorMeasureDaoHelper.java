@@ -24,7 +24,7 @@ public class SensorMeasureDaoHelper {
         dao.setTimestamp(sampleDate);
 
         dao.setMeasureType(measureKey.getType().getUnit());
-        dao.setMeasureValue(sensorMeasure.getValue());
+        dao.setValue(sensorMeasure.getValue());
 
         return dao;
     }
@@ -36,7 +36,7 @@ public class SensorMeasureDaoHelper {
                         sensorMeasureLatestDao.getMeasureType() != null ? SensorMeasureType.valueOf(sensorMeasureLatestDao.getMeasureType()) : null),
                 new SensorMeasure(
                         sensorMeasureLatestDao.getTimestamp() != null ? sensorMeasureLatestDao.getTimestamp().getTime() : null,
-                        sensorMeasureLatestDao.getMeasureValue()
+                        sensorMeasureLatestDao.getValue()
                 )
         );
     }
@@ -54,7 +54,7 @@ public class SensorMeasureDaoHelper {
         return Date.from(Instant.ofEpochMilli(timeMillisSinceEpoch));
     }
 
-    public static Long getTimeBlockId(Date targetTime, HistoricalDataStorageSizing targetHistoricalData) {
+    public static Long getHistoricalMeasureBlockId(Date targetTime, HistoricalDataStorageSizing targetHistoricalData) {
         return targetTime.getTime() / 1000L / targetHistoricalData.getTimeBlockPeriodSeconds();
     }
 }

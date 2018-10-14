@@ -19,7 +19,7 @@ public enum HistoricalDataStorageSizing {
     SECOND_PRECISION_RAW(1L), //Raw data provided by sensor network
     MINUTE_PRECISION_AGGREGATE(60L); //Possible DB-stored output of batch processing aggregate on sensor network raw data
 
-    public static final long MAX_TABLE_PARTITION_SIZE_BYTES = 50 * (2^20);
+    public static final long MAX_TABLE_PARTITION_SIZE_BYTES = 50 * (1L << 20);
     public static final long MEASURE_HISTORY_ROW_SIZE_BYTES = 100L;
     public static final long RECORDS_PER_TABLE_PARTITION  = (MAX_TABLE_PARTITION_SIZE_BYTES / MEASURE_HISTORY_ROW_SIZE_BYTES);
 

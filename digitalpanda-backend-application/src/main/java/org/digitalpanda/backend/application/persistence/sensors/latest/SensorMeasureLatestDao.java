@@ -13,17 +13,17 @@ public class SensorMeasureLatestDao {
 
     public static final String SENSOR_MEASURE_LATEST_TABLE_NAME = "sensor_measure_latest";
 
-    @PrimaryKeyColumn(ordinal = 0, type = PrimaryKeyType.PARTITIONED)
-    private String location; //text
+    @PrimaryKeyColumn(name = "location", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
+    private String location;
 
-    @PrimaryKeyColumn(ordinal = 1, type = PrimaryKeyType.PARTITIONED)
-    private String measureType; //text
+    @PrimaryKeyColumn(name = "measure_type", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+    private String measureType;
 
-    @PrimaryKeyColumn(ordinal = 2,  type = PrimaryKeyType.CLUSTERED)
-    private Date timestamp; //time
+    @PrimaryKeyColumn(name = "timestamp", ordinal = 2,  type = PrimaryKeyType.CLUSTERED)
+    private Date timestamp;
 
     @Column
-    private double measureValue; //text
+    private double value;
 
     public String getLocation() {
         return location;
@@ -49,12 +49,12 @@ public class SensorMeasureLatestDao {
         this.measureType = measureType;
     }
 
-    public double getMeasureValue() {
-        return measureValue;
+    public double getValue() {
+        return value;
     }
 
-    public void setMeasureValue(double measureValue) {
-        this.measureValue = measureValue;
+    public void setValue(double value) {
+        this.value = value;
     }
 
     @Override
@@ -62,7 +62,7 @@ public class SensorMeasureLatestDao {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SensorMeasureLatestDao that = (SensorMeasureLatestDao) o;
-        return Double.compare(that.measureValue, measureValue) == 0 &&
+        return Double.compare(that.value, value) == 0 &&
                 Objects.equals(location, that.location) &&
                 Objects.equals(timestamp, that.timestamp) &&
                 Objects.equals(measureType, that.measureType);
@@ -70,7 +70,7 @@ public class SensorMeasureLatestDao {
 
     @Override
     public int hashCode() {
-        return Objects.hash(location, timestamp, measureType, measureValue);
+        return Objects.hash(location, timestamp, measureType, value);
     }
 
     @Override
@@ -79,7 +79,7 @@ public class SensorMeasureLatestDao {
                 "location='" + location + '\'' +
                 ", measureType='" + measureType + '\'' +
                 ", timestamp=" + timestamp +
-                ", measureValue=" + measureValue +
+                ", value=" + value +
                 '}';
     }
 }
