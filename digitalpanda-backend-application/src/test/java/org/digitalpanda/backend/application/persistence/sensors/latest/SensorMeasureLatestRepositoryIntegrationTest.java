@@ -1,7 +1,6 @@
-package org.digitalpanda.backend.application.persistence.sensors;
+package org.digitalpanda.backend.application.persistence.sensors.latest;
 
 import org.digitalpanda.backend.application.persistence.CassandraWithSpringBaseTest;
-import org.digitalpanda.backend.application.persistence.sensors.latest.SensorMeasureLatestDao;
 import org.digitalpanda.backend.data.SensorMeasure;
 import org.digitalpanda.backend.data.SensorMeasureMetaData;
 import org.digitalpanda.backend.data.SensorMeasureType;
@@ -18,7 +17,7 @@ import java.util.HashMap;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNull;
 
-public class SensorMeasureRepositoryIntegrationTest extends CassandraWithSpringBaseTest {
+public class SensorMeasureLatestRepositoryIntegrationTest extends CassandraWithSpringBaseTest {
 
     //@Rule
     //public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("dataset.cql", CassandraConfig.APP_KEYSPACE));
@@ -29,7 +28,7 @@ public class SensorMeasureRepositoryIntegrationTest extends CassandraWithSpringB
     private CassandraAdminOperations adminTemplate;
 
     @Autowired
-    private SensorMeasureRepository repository;
+    private SensorMeasureLatestRepository repository;
 
     @Before
     public void createTable() {
@@ -40,7 +39,7 @@ public class SensorMeasureRepositoryIntegrationTest extends CassandraWithSpringB
     }
 
     @Test
-    public void should_coldReadThenHotRead() {
+    public void latestMeasure_should_coldReadThenHotRead() {
         //Given, When
         SensorMeasure actualCold = repository.getLatestMeasure(TEST_PRIMARY_KEY);
         SensorMeasure actualHot = repository.getLatestMeasure(TEST_PRIMARY_KEY);
@@ -53,7 +52,7 @@ public class SensorMeasureRepositoryIntegrationTest extends CassandraWithSpringB
     }
 
     @Test
-    public void should_coldReadThenLocalSetThenReadHot() {
+    public void lLatestMeasure_should_coldReadThenLocalSetThenReadHot() {
         //Given
         long now = System.currentTimeMillis();
         SensorMeasureMetaData key = new SensorMeasureMetaData("locationB", SensorMeasureType.TEMPERATURE);
@@ -71,7 +70,7 @@ public class SensorMeasureRepositoryIntegrationTest extends CassandraWithSpringB
     }
 
     @Test
-    public void should_hotReadThenSetThenUpToDateRead() {
+    public void latestMeasure_should_hotReadThenSetThenUpToDateRead() {
         //Given
         long now = System.currentTimeMillis();
         SensorMeasure expected2 = new SensorMeasure(now, 2.42);
@@ -91,7 +90,7 @@ public class SensorMeasureRepositoryIntegrationTest extends CassandraWithSpringB
     }
 
     @Test
-    public void should_hotReadThenExternalUpdateThenUpToDateRead() {
+    public void latestMeasure_should_hotReadThenExternalUpdateThenUpToDateRead() {
         //Given
         long now = System.currentTimeMillis();
         SensorMeasure expectedExternalUpdate = new SensorMeasure(now, 2.42);

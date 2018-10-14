@@ -1,5 +1,6 @@
 package org.digitalpanda.backend.application.persistence.sensors;
 
+import org.digitalpanda.backend.application.persistence.sensors.history.HistoricalDataStorageSizing;
 import org.digitalpanda.backend.application.persistence.sensors.latest.SensorMeasureLatestDao;
 import org.digitalpanda.backend.application.util.Pair;
 import org.digitalpanda.backend.data.SensorMeasure;
@@ -11,10 +12,10 @@ import org.springframework.data.cassandra.core.mapping.MapId;
 import java.time.Instant;
 import java.util.Date;
 
-class SensorMeasureDaoHelper {
+public class SensorMeasureDaoHelper {
 
 
-    static SensorMeasureLatestDao toLatestMeasureDao(SensorMeasureMetaData measureKey, SensorMeasure sensorMeasure){
+    public static SensorMeasureLatestDao toLatestMeasureDao(SensorMeasureMetaData measureKey, SensorMeasure sensorMeasure){
         SensorMeasureLatestDao dao = new SensorMeasureLatestDao();
         Date sampleDate = toDate(sensorMeasure.getTimestamp());
 
@@ -28,7 +29,7 @@ class SensorMeasureDaoHelper {
         return dao;
     }
 
-    static Pair<SensorMeasureMetaData, SensorMeasure> toSensorMeasure(SensorMeasureLatestDao sensorMeasureLatestDao){
+    public static Pair<SensorMeasureMetaData, SensorMeasure> toSensorMeasure(SensorMeasureLatestDao sensorMeasureLatestDao){
         return new Pair<>(
                 new SensorMeasureMetaData(
                         sensorMeasureLatestDao.getLocation(),
@@ -40,7 +41,7 @@ class SensorMeasureDaoHelper {
         );
     }
 
-    static MapId primaryKeyForLatestMeasure(SensorMeasureMetaData measureKey){
+    public static MapId primaryKeyForLatestMeasure(SensorMeasureMetaData measureKey){
         MapId id = new BasicMapId();
         id.put("location", measureKey.getLocation());
         if (measureKey.getType() != null) {
@@ -49,11 +50,11 @@ class SensorMeasureDaoHelper {
         return id;
     }
 
-    private static String extractDateDay(Date sampleDate){
-        return SensorMeasureLatestDao.DATE_DAY.format(sampleDate);
+    public static Date toDate(long timeMillisSinceEpoch){
+        return Date.from(Instant.ofEpochMilli(timeMillisSinceEpoch));
     }
 
-    private static Date toDate(long timeMillisSinceEpoch){
-        return Date.from(Instant.ofEpochMilli(timeMillisSinceEpoch));
+    public static Long getTimeBlockId(Date targetTime, HistoricalDataStorageSizing targetHistoricalData) {
+        return targetTime.getTime() / 1000L / targetHistoricalData.getTimeBlockPeriodSeconds();
     }
 }

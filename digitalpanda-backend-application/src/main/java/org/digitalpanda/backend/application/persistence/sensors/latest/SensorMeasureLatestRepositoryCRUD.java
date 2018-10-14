@@ -4,6 +4,6 @@ import org.springframework.data.cassandra.repository.MapIdCassandraRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SensorMeasureLatestCassandraRepository extends MapIdCassandraRepository<SensorMeasureLatestDao> {
+public interface SensorMeasureLatestRepositoryCRUD extends MapIdCassandraRepository<SensorMeasureLatestDao> {
     //Auto-manged by Spring
 }

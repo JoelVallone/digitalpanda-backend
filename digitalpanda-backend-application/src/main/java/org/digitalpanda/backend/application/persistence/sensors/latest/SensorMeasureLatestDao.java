@@ -5,24 +5,21 @@ import org.springframework.data.cassandra.core.mapping.Column;
 import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
 import org.springframework.data.cassandra.core.mapping.Table;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 
-@Table(SensorMeasureLatestDao.SENSOR_MEASURE_LATEST_TABLE_NAME) //Record max size rough estimation : 100 Bytes
+@Table(SensorMeasureLatestDao.SENSOR_MEASURE_LATEST_TABLE_NAME) //Record max size rough estimation : 20 + 20 + 8 + 8 (56) Bytes
 public class SensorMeasureLatestDao {
 
     public static final String SENSOR_MEASURE_LATEST_TABLE_NAME = "sensor_measure_latest";
-    public static final int SENSOR_MEASURE_DEFAULT_BUCKET_ID = 0;
-    public static final SimpleDateFormat DATE_DAY = new SimpleDateFormat("yyyy-MM-dd");
 
-    @PrimaryKeyColumn(name = "location", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private String location; //text
 
-    @PrimaryKeyColumn(name = "measureType", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(ordinal = 1, type = PrimaryKeyType.PARTITIONED)
     private String measureType; //text
 
-    @Column
+    @PrimaryKeyColumn(ordinal = 2,  type = PrimaryKeyType.CLUSTERED)
     private Date timestamp; //time
 
     @Column
@@ -74,5 +71,15 @@ public class SensorMeasureLatestDao {
     @Override
     public int hashCode() {
         return Objects.hash(location, timestamp, measureType, measureValue);
+    }
+
+    @Override
+    public String toString() {
+        return "SensorMeasureLatestDao{" +
+                "location='" + location + '\'' +
+                ", measureType='" + measureType + '\'' +
+                ", timestamp=" + timestamp +
+                ", measureValue=" + measureValue +
+                '}';
     }
 }

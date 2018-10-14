@@ -1,13 +1,11 @@
-package org.digitalpanda.backend.application.persistence.sensors;
+package org.digitalpanda.backend.application.persistence.sensors.latest;
 
-import org.digitalpanda.backend.application.persistence.sensors.latest.SensorMeasureLatestCassandraRepository;
-import org.digitalpanda.backend.application.persistence.sensors.latest.SensorMeasureLatestDao;
+import org.digitalpanda.backend.application.persistence.sensors.SensorMeasureDaoHelper;
 import org.digitalpanda.backend.data.SensorMeasure;
 import org.digitalpanda.backend.data.SensorMeasureMetaData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
 
@@ -20,22 +18,19 @@ import static org.digitalpanda.backend.application.persistence.sensors.SensorMea
 /*
  https://docs.spring.io/spring-data/cassandra/docs/2.0.9.RELEASE/reference/html/
  https://www.baeldung.com/spring-data-cassandratemplate-cqltemplate
-    See query derivation,SensorMeasureRepository
+    See query derivation,SensorMeasureLatestRepository
  */
 @Repository
-public class SensorMeasureRepository {
+public class SensorMeasureLatestRepository {
 
-    private Logger logger =  LoggerFactory.getLogger(SensorMeasureRepository.class);
-
-    @Autowired
-    private CassandraOperations cassandraTemplate; //Used for advanced queries
+    private Logger logger =  LoggerFactory.getLogger(SensorMeasureLatestRepository.class);
 
     @Autowired
-    private SensorMeasureLatestCassandraRepository sensorMeasureLatestRepo; //Available for CRUD queries
+    private SensorMeasureLatestRepositoryCRUD sensorMeasureLatestRepo; //Available for CRUD queries
 
     private Map<SensorMeasureMetaData, SensorMeasure> latestMeasures;
 
-    public SensorMeasureRepository() {
+    public SensorMeasureLatestRepository() {
         this.latestMeasures = new ConcurrentHashMap<>();
     }
 
@@ -90,11 +85,6 @@ public class SensorMeasureRepository {
 
     void clearCache(){
         latestMeasures.clear();
-    }
-
-    //TODO : getMeasuresAtLocation()
-    public List<SensorMeasureLatestDao> getMeasuresAtLocation(String location, Date beginInc, Date endExcl) {
-        return Collections.emptyList();
     }
 }
 

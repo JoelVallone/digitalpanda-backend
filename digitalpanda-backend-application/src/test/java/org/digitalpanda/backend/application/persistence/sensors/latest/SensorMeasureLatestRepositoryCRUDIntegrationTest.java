@@ -1,8 +1,6 @@
 package org.digitalpanda.backend.application.persistence.sensors.latest;
 
 import org.digitalpanda.backend.application.persistence.CassandraWithSpringBaseTest;
-import org.digitalpanda.backend.application.persistence.sensors.latest.SensorMeasureLatestCassandraRepository;
-import org.digitalpanda.backend.application.persistence.sensors.latest.SensorMeasureLatestDao;
 import org.digitalpanda.backend.data.SensorMeasureType;
 import org.junit.After;
 import org.junit.Before;
@@ -20,13 +18,13 @@ import java.util.Optional;
 
 import static junit.framework.TestCase.assertEquals;
 
-public class SensorMeasureLatestCassandraRepositoryIntegrationTest extends CassandraWithSpringBaseTest {
+public class SensorMeasureLatestRepositoryCRUDIntegrationTest extends CassandraWithSpringBaseTest {
 
     @Autowired
     CassandraAdminOperations adminTemplate;
 
     @Autowired
-    SensorMeasureLatestCassandraRepository repository;
+    SensorMeasureLatestRepositoryCRUD repository;
 
     @Before
     public void createTable() {

@@ -1,6 +1,6 @@
 package org.digitalpanda.backend.application.ressource;
 
-import org.digitalpanda.backend.application.persistence.sensors.SensorMeasureRepository;
+import org.digitalpanda.backend.application.persistence.sensors.latest.SensorMeasureLatestRepository;
 import org.digitalpanda.backend.data.SensorMeasure;
 import org.digitalpanda.backend.data.SensorMeasureMetaData;
 import org.digitalpanda.backend.data.SensorMeasures;
@@ -15,23 +15,23 @@ import java.util.stream.Collectors;
 @RequestMapping("/sensor")
 public class SensorMeasureController {
 
-    private SensorMeasureRepository sensorMeasureRepository;
+    private SensorMeasureLatestRepository sensorMeasureLatestRepository;
 
     @Autowired
-    public SensorMeasureController(SensorMeasureRepository sensorMeasureRepository) {
-        this.sensorMeasureRepository = sensorMeasureRepository;
+    public SensorMeasureController(SensorMeasureLatestRepository sensorMeasureLatestRepository) {
+        this.sensorMeasureLatestRepository = sensorMeasureLatestRepository;
     }
 
     @CrossOrigin
     @RequestMapping(method= RequestMethod.GET, path="/keys")
     public List<SensorMeasureMetaData> getMeasureKeys(){
-        return sensorMeasureRepository.getKeys();
+        return sensorMeasureLatestRepository.getKeys();
     }
 
     @CrossOrigin
     @RequestMapping(method= RequestMethod.GET)
     public SensorMeasure getLatestMeasure(SensorMeasureMetaData sensorMeasureMetaData){
-        return sensorMeasureRepository.getLatestMeasure(sensorMeasureMetaData);
+        return sensorMeasureLatestRepository.getLatestMeasure(sensorMeasureMetaData);
     }
 
     //FIXME: Add endpoint to retrieve a list of measures between time intervals (MeasureTypesList, location, startDate, endDate).
@@ -42,7 +42,7 @@ public class SensorMeasureController {
         System.out.println("/sensor POST: " + sensorMeasuresList.stream().map(SensorMeasures::toString).collect(Collectors.joining(",")));
         sensorMeasuresList.forEach(
                 (sensorMeasures) ->
-                    sensorMeasureRepository.setMeasure(
+                    sensorMeasureLatestRepository.setMeasure(
                             sensorMeasures.getSensorMeasureMetaData(),
                             sensorMeasures.getMeasures().stream().max(SensorMeasure::compareTo).get()));
     }
