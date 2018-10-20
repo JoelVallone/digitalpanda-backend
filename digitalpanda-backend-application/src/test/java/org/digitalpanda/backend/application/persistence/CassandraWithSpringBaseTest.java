@@ -2,8 +2,8 @@ package org.digitalpanda.backend.application.persistence;
 
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.digitalpanda.backend.application.config.CassandraConfig;
-import org.digitalpanda.backend.application.persistence.sensors.history.SensorMeasureHistoryRepository;
-import org.digitalpanda.backend.application.persistence.sensors.latest.SensorMeasureLatestRepository;
+import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistoryRepository;
+import org.digitalpanda.backend.application.persistence.measure.latest.SensorMeasureLatestRepository;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;

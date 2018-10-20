@@ -17,7 +17,7 @@ import java.util.List;
 import static java.util.stream.Collectors.toList;
 
 @Configuration
-@EnableCassandraRepositories("org.digitalpanda.backend.application.persistence.sensors")
+@EnableCassandraRepositories("org.digitalpanda.backend.application.persistence.measure")
 @PropertySource("classpath:application.properties")
 public class CassandraConfig extends AbstractCassandraConfiguration {
 
@@ -30,7 +30,7 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
     }
 
     public String[] getEntityBasePackages() {
-        return new String[] { "org.digitalpanda.backend.application.persistence.sensors" };
+        return new String[] { "org.digitalpanda.backend.application.persistence.measure" };
     }
 
     @Override
