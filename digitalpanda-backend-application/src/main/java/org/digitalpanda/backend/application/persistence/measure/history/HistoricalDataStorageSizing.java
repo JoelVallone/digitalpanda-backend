@@ -16,8 +16,8 @@ Cassandra: Maximum partition size : 50 MiB,
     => 500 k records
 */
 public enum HistoricalDataStorageSizing {
-    SECOND_PRECISION_RAW(1L), //Raw data provided by sensor network
-    MINUTE_PRECISION_AGGREGATE(60L); //Possible DB-stored output of batch processing aggregate on sensor network raw data
+    SECOND_PRECISION_RAW(1L, AggregateType.VAL); //Raw data provided by sensor network
+    //MINUTE_PRECISION_AGGREGATE(60L, AggregateType.AVG); //TODO: Possible DB-stored output of batch processing aggregate on sensor network raw data
 
     public static final long MAX_TABLE_PARTITION_SIZE_BYTES = 50 * (1L << 20);
     public static final long MEASURE_HISTORY_ROW_SIZE_BYTES = 100L;
@@ -25,11 +25,13 @@ public enum HistoricalDataStorageSizing {
 
     private Long timeBlockPeriodSeconds;
     private Long aggregateIntervalSeconds;
+    private AggregateType aggregateType;
 
 
-    HistoricalDataStorageSizing(Long aggregateIntervalSeconds){
+    HistoricalDataStorageSizing(Long aggregateIntervalSeconds, AggregateType aggregateType){
         this.aggregateIntervalSeconds = aggregateIntervalSeconds;
         this.timeBlockPeriodSeconds = aggregateIntervalSeconds * RECORDS_PER_TABLE_PARTITION;
+        this.aggregateType = aggregateType;
     }
 
     public Long getTimeBlockPeriodSeconds() {
@@ -38,5 +40,9 @@ public enum HistoricalDataStorageSizing {
 
     public Long getAggregateIntervalSeconds() {
         return aggregateIntervalSeconds;
+    }
+
+    public AggregateType getAggregateType() {
+        return aggregateType;
     }
 }

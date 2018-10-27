@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.CassandraAdminOperations;
 import org.springframework.data.cassandra.core.cql.CqlIdentifier;
 
-import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.*;
 
 import static java.util.stream.Collectors.toList;
@@ -31,8 +31,6 @@ public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWith
     @Autowired
     SensorMeasureHistoryRepository repository;
 
-    private static final SimpleDateFormat DATE_FORMAT =new SimpleDateFormat("MMM dd yyyy HH:mm:ss");
-
     @Before
     public void createTable() {
         adminTemplate.createTable(
@@ -40,22 +38,20 @@ public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWith
     }
 
     @Test
-    public void shouldInsertAndFindEntity() throws Exception {
+    public void shouldInsertAndFindEntity() {
         //Given
         //  => Data in table partition 1
-        Date dateFirstElementFirstPartition = DATE_FORMAT.parse("Dec 24 2018 23:59:59");
+        long timestampMillisFirstElementFirstPartition = 1545695999000L;
         List<SensorMeasureHistoryDao> firstPartition = measureSequence(Collections.singletonList(
-                new Pair<>(dateFirstElementFirstPartition, 1.14159)));
+                new Pair<>(timestampMillisFirstElementFirstPartition, 1.14159)));
         //  => Data in table partition 2
-        Date dateFirstElementSecondPartition = new Date(
-                (getHistoricalMeasureBlockId(dateFirstElementFirstPartition, TARGET_HISTORICAL_DATA_SIZING) + 1)
-                        * TARGET_HISTORICAL_DATA_SIZING.getTimeBlockPeriodSeconds()
-                        * 1000L);
-        Date dateSecondElementSecondPartition = new Date(
-                dateFirstElementSecondPartition.getTime() + 1000L);
+        long timestampMillisFirstElementSecondPartition =
+                (getHistoricalMeasureBlockId(timestampMillisFirstElementFirstPartition, TARGET_HISTORICAL_DATA_SIZING) + 1)
+                        * TARGET_HISTORICAL_DATA_SIZING.getTimeBlockPeriodSeconds() * 1000L;
+        long timestampMillisSecondElementSecondPartition = timestampMillisFirstElementSecondPartition + 1000L;
         List<SensorMeasureHistoryDao> secondPartition = measureSequence(Arrays.asList(
-            new Pair<>(dateFirstElementSecondPartition, 2.14159),
-            new Pair<>(dateSecondElementSecondPartition, 3.14159)));
+            new Pair<>(timestampMillisFirstElementSecondPartition, 2.14159),
+            new Pair<>(timestampMillisSecondElementSecondPartition, 3.14159)));
 
         List<SensorMeasureHistoryDao> dataToStore = new ArrayList<>(firstPartition);
         dataToStore.addAll(secondPartition);
@@ -68,8 +64,8 @@ public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWith
                     TARGET_MEASURE_TYPE,
                     TARGET_AGGREGATE_TYPE,
                     TARGET_HISTORICAL_DATA_SIZING,
-                    dateFirstElementFirstPartition,
-                    dateFirstElementSecondPartition);
+                    timestampMillisFirstElementFirstPartition,
+                    timestampMillisFirstElementSecondPartition);
 
         //Then
         assertEquals(2, actual.size());
@@ -77,23 +73,21 @@ public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWith
         assertEquals(secondPartition.get(0), actual.get(1));
     }
 
-    private List<SensorMeasureHistoryDao> measureSequence(List<Pair<Date, Double>> timestampedMeasures){
+    private List<SensorMeasureHistoryDao> measureSequence(List<Pair<Long, Double>> timestampedMeasures){
         return timestampedMeasures.stream()
                 .map(timestampedMeasure -> {
                     SensorMeasureHistoryDao dao = new SensorMeasureHistoryDao();
                     dao.setLocation(TEST_LOCATION); //Partition field
-                    Date measureDate = timestampedMeasure.getFirst();
                     dao.setTimeBlockPeriodSeconds(TARGET_HISTORICAL_DATA_SIZING.getTimeBlockPeriodSeconds()); //Partition field
-                    dao.setTimeBlockId(getHistoricalMeasureBlockId(measureDate, TARGET_HISTORICAL_DATA_SIZING)); //Partition field
+                    dao.setTimeBlockId(getHistoricalMeasureBlockId(timestampedMeasure.getFirst(), TARGET_HISTORICAL_DATA_SIZING)); //Partition field
                     dao.setMeasureType(TARGET_MEASURE_TYPE.name()); //Partition field
                     dao.setAggregateType(TARGET_AGGREGATE_TYPE.name()); //Partition field
                     dao.setBucket(SensorMeasureHistoryDao.SENSOR_MEASURE_DEFAULT_BUCKET_ID); //Partition field
-                    dao.setTimestamp(measureDate);//Clustering field
+                    dao.setTimestamp(Date.from(Instant.ofEpochMilli(timestampedMeasure.getFirst())));//Clustering field
                     dao.setValue(timestampedMeasure.getSecond());
                     return dao;
                 }).collect(toList());
     }
-
 
     @After
     public void dropTable() {

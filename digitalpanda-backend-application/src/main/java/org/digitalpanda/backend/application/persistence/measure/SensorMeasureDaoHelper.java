@@ -17,6 +17,8 @@ public class SensorMeasureDaoHelper {
 
     public static SensorMeasureLatestDao toLatestMeasureDao(SensorMeasureMetaData measureKey, SensorMeasure sensorMeasure){
         SensorMeasureLatestDao dao = new SensorMeasureLatestDao();
+
+        //Timezone implicitly set to : ZoneId.systemDefault()
         Date sampleDate = toDate(sensorMeasure.getTimestamp());
 
         dao.setLocation(measureKey.getLocation());
@@ -35,7 +37,7 @@ public class SensorMeasureDaoHelper {
                         sensorMeasureLatestDao.getLocation(),
                         sensorMeasureLatestDao.getMeasureType() != null ? SensorMeasureType.valueOf(sensorMeasureLatestDao.getMeasureType()) : null),
                 new SensorMeasure(
-                        sensorMeasureLatestDao.getTimestamp() != null ? sensorMeasureLatestDao.getTimestamp().getTime() : null,
+                        sensorMeasureLatestDao.getTimestamp() != null ? sensorMeasureLatestDao.getTimestamp().getTime() : 0L,
                         sensorMeasureLatestDao.getValue()
                 )
         );
@@ -54,7 +56,7 @@ public class SensorMeasureDaoHelper {
         return Date.from(Instant.ofEpochMilli(timeMillisSinceEpoch));
     }
 
-    public static Long getHistoricalMeasureBlockId(Date targetTime, HistoricalDataStorageSizing targetHistoricalData) {
-        return targetTime.getTime() / 1000L / targetHistoricalData.getTimeBlockPeriodSeconds();
+    public static long getHistoricalMeasureBlockId(long targetTimeMillis, HistoricalDataStorageSizing targetHistoricalData) {
+        return targetTimeMillis / 1000L / targetHistoricalData.getTimeBlockPeriodSeconds();
     }
 }

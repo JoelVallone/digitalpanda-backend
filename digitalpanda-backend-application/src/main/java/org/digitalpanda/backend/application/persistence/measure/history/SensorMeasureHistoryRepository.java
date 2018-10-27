@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.stereotype.Repository;
 
-import java.util.Date;
 import java.util.List;
 import java.util.stream.LongStream;
 
@@ -15,9 +14,9 @@ import static java.util.stream.Collectors.toList;
 import static org.digitalpanda.backend.application.persistence.measure.SensorMeasureDaoHelper.getHistoricalMeasureBlockId;
 
 @Repository
-public class SensorMeasureHistoryRepository  {
+public class SensorMeasureHistoryRepository {
 
-    private Logger logger =  LoggerFactory.getLogger(SensorMeasureHistoryRepository.class);
+    private Logger logger = LoggerFactory.getLogger(SensorMeasureHistoryRepository.class);
 
     @Autowired
     private CassandraOperations cassandraTemplate; //Used for advanced queries
@@ -29,7 +28,7 @@ public class SensorMeasureHistoryRepository  {
 
     }
 
-    public List<SensorMeasureHistoryDao> saveAll(List<SensorMeasureHistoryDao> measuresToSave){
+    public List<SensorMeasureHistoryDao> saveAll(List<SensorMeasureHistoryDao> measuresToSave) {
         return sensorMeasureHistoryRepoCRUD.saveAll(measuresToSave);
     }
 
@@ -39,11 +38,11 @@ public class SensorMeasureHistoryRepository  {
             SensorMeasureType measureType,
             AggregateType aggregateType,
             HistoricalDataStorageSizing targetHistoricalDataSizing,
-            Date beginInc,
-            Date endIncl) {
+            long intervalBeginMillisIncl,
+            long intervalEndSecondsIncl) {
 
-        long startBlockId = getHistoricalMeasureBlockId(beginInc, targetHistoricalDataSizing);
-        long endBlockId = getHistoricalMeasureBlockId(endIncl, targetHistoricalDataSizing);
+        long startBlockId = getHistoricalMeasureBlockId(intervalBeginMillisIncl, targetHistoricalDataSizing);
+        long endBlockId = getHistoricalMeasureBlockId(intervalEndSecondsIncl, targetHistoricalDataSizing);
 
         return LongStream.rangeClosed(startBlockId, endBlockId).boxed()
                 .map(blockId -> {
@@ -62,8 +61,8 @@ public class SensorMeasureHistoryRepository  {
                                 measureType.name(),
                                 aggregateType.name(),
                                 SensorMeasureHistoryDao.SENSOR_MEASURE_DEFAULT_BUCKET_ID,
-                                beginInc.getTime(),
-                                endIncl.getTime());
+                                intervalBeginMillisIncl,
+                                intervalEndSecondsIncl);
                         logger.debug(cqlRangeSelect);
                         return cassandraTemplate.select(cqlRangeSelect, SensorMeasureHistoryDao.class);
                     }

@@ -13,6 +13,7 @@ public class SensorMeasureHistoryDao {
 
     public static final String SENSOR_MEASURE_HISTORY_TABLE_NAME = "sensor_measure_history";
     public static final int SENSOR_MEASURE_DEFAULT_BUCKET_ID = 0;
+    public static final int ROW_SIZE_BYTES = 86;
 
     @PrimaryKeyColumn(name = "location", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private String location;
