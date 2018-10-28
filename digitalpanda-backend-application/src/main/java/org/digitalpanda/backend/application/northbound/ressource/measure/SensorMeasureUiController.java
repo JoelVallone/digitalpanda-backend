@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -50,19 +49,19 @@ public class SensorMeasureUiController {
 
     @CrossOrigin
     @RequestMapping(method = RequestMethod.GET, path = "/history")
-    public List<SensorMeasuresDTO> getMeasureInterval(String location, String type, Long startTimeMillisIncl, Long endTimeMillisIncl, Integer dataPointCount) {
-        if (startTimeMillisIncl < endTimeMillisIncl) {
+    public List<SensorMeasuresDTO> getMeasureInterval(String location, String type, Long startTimeMillisIncl, Long endTimeMillisExcl, Integer dataPointCount) {
+        if (startTimeMillisIncl < endTimeMillisExcl) {
             throw new InvalidParameterException(
-                    String.format("startTimeMillisIncl(=%s) must be greater or equal to endTimeMillisIncl(=%s)",
-                            startTimeMillisIncl, endTimeMillisIncl));
+                    String.format("startTimeMillisIncl(=%s) must be greater or equal to endTimeMillisExcl(=%s)",
+                            startTimeMillisIncl, endTimeMillisExcl));
         }
 
         return sensorMeasureHistoryService
-                .getMeasuresWithContinuousEquidistributedSubIntervals(location, SensorMeasureType.valueOf(type), startTimeMillisIncl, endTimeMillisIncl, dataPointCount).stream()
+                .getMeasuresWithContinuousEquidistributedSubIntervals(location, SensorMeasureType.valueOf(type), startTimeMillisIncl, endTimeMillisExcl, dataPointCount).stream()
                 .map(sensorMeasuresEquidistributed ->
                         new SensorMeasuresDTO(
                                 sensorMeasuresEquidistributed.getStartTimeMillisIncl(),
-                                sensorMeasuresEquidistributed.getEndTimeMillisIncl(),
+                                sensorMeasuresEquidistributed.getEndTimeMillisExcl(),
                                 sensorMeasuresEquidistributed.getTargetPeriodMillis(),
                                 location,
                                 type,

@@ -26,33 +26,32 @@ public class SensorMeasureHistoryService {
     }
 
     public List<SensorMeasuresEquidistributed> getMeasuresWithContinuousEquidistributedSubIntervals(
-            String location, SensorMeasureType sensorMeasureType, long startTimeMillisIncl, long endTimeMillisIncl, int dataPointCount) {
-        HistoricalDataStorageSizing storageSizingWithNearestLowerPeriod = findHistoricalDataStorageSizingWithNearestLowerPeriod(startTimeMillisIncl, endTimeMillisIncl, dataPointCount);
+            String location, SensorMeasureType sensorMeasureType, long startTimeMillisIncl, long endTimeMillisExcl, int dataPointCount) {
+        HistoricalDataStorageSizing storageSizingWithNearestLowerPeriod = findHistoricalDataStorageSizingWithNearestLowerPeriod(startTimeMillisIncl, endTimeMillisExcl, dataPointCount);
 
-        long trimmedEndTimeMillisIncl = endTimeMillisIncl;
-        if((endTimeMillisIncl - startTimeMillisIncl) / (storageSizingWithNearestLowerPeriod.getTimeBlockPeriodSeconds()*1000)  > MAX_ROW_COUNT) {
+        long trimmedEndTimeMillisIncl = endTimeMillisExcl;
+        if((endTimeMillisExcl - startTimeMillisIncl) / (storageSizingWithNearestLowerPeriod.getTimeBlockPeriodSeconds()*1000)  > MAX_ROW_COUNT) {
             trimmedEndTimeMillisIncl = startTimeMillisIncl + (storageSizingWithNearestLowerPeriod.getTimeBlockPeriodSeconds() * 1000 * MAX_ROW_COUNT);
         }
         List<SensorMeasureHistoryDao> storageValuesTimeIncreasing = loadMeasuresIncreasingOrder(location, sensorMeasureType, startTimeMillisIncl, trimmedEndTimeMillisIncl, storageSizingWithNearestLowerPeriod);
 
-        return resizeSample(startTimeMillisIncl, endTimeMillisIncl, dataPointCount, storageValuesTimeIncreasing, storageSizingWithNearestLowerPeriod);
+        return resizeSample(startTimeMillisIncl, endTimeMillisExcl, dataPointCount, storageValuesTimeIncreasing, storageSizingWithNearestLowerPeriod);
     }
 
-    private List<SensorMeasuresEquidistributed> resizeSample(long startTimeMillisIncl, long endTimeMillisIncl, int targetDataPointCount, List<SensorMeasureHistoryDao> storedMeasuresTimeIncreasing, HistoricalDataStorageSizing historicalDataStorageSizing) {
+    private List<SensorMeasuresEquidistributed> resizeSample(long startTimeMillisIncl, long endTimeMillisExcl, int targetDataPointCount, List<SensorMeasureHistoryDao> storedMeasuresTimeIncreasing, HistoricalDataStorageSizing historicalDataStorageSizing) {
         if(storedMeasuresTimeIncreasing.size() == 0)
             return Collections.emptyList();
 
-        final long targetPeriodMillis = (endTimeMillisIncl - startTimeMillisIncl) / targetDataPointCount;
+        final long targetPeriodMillis = (endTimeMillisExcl - startTimeMillisIncl) / targetDataPointCount;
         if (targetPeriodMillis < 1000)
             throw new RuntimeException("Historical data sample bellow second period is not supported");
 
         long storageDataSampleUnitPeriodMillis = historicalDataStorageSizing.getAggregateIntervalSeconds() * 1000;
         List<SensorMeasuresEquidistributed> sensorMeasuresResizedEquidistributedSubSamples = new ArrayList<>();
         List<SensorMeasureHistoryDao> currentSubIntervalMeasures = new ArrayList<>();
-        long curentSubSampleStartIntervalMillis = startTimeMillisIncl;
+        long curentSubSampleStartIntervalMillis = storedMeasuresTimeIncreasing.get(0).getTimestamp().getTime();
 
-        SensorMeasureHistoryDao previousMeasure = new SensorMeasureHistoryDao();
-        previousMeasure.setTimestamp(Date.from(Instant.ofEpochMilli(startTimeMillisIncl)));
+        SensorMeasureHistoryDao previousMeasure = storedMeasuresTimeIncreasing.get(0);
 
         for (SensorMeasureHistoryDao currentMeasure : storedMeasuresTimeIncreasing) {
             //If the next measure creates a discontinuity:
@@ -60,9 +59,9 @@ public class SensorMeasureHistoryService {
             // 2) Start a new sub sample interval
             if (currentMeasure.getTimestamp().getTime() > previousMeasure.getTimestamp().getTime() + (long) (targetPeriodMillis * MAX_OUTPUT_MEASURES_JITTER)) {
                 sensorMeasuresResizedEquidistributedSubSamples.add(
-                        resizeSubSample(
+                        resizeSubSampleToTargetDataPointPeriodWithAverage(
                             curentSubSampleStartIntervalMillis,
-                            previousMeasure.getTimestamp().getTime() + storageDataSampleUnitPeriodMillis,
+                            previousMeasure.getTimestamp().getTime(), // + storageDataSampleUnitPeriodMillis,
                             targetPeriodMillis,
                             currentSubIntervalMeasures
                 ));
@@ -78,9 +77,9 @@ public class SensorMeasureHistoryService {
         if(sensorMeasuresResizedEquidistributedSubSamples.size() == 0 ||
                 sensorMeasuresResizedEquidistributedSubSamples.get(sensorMeasuresResizedEquidistributedSubSamples.size()-1).getStartTimeMillisIncl() != curentSubSampleStartIntervalMillis){
             sensorMeasuresResizedEquidistributedSubSamples.add(
-                    resizeSubSample(
+                    resizeSubSampleToTargetDataPointPeriodWithAverage(
                             curentSubSampleStartIntervalMillis,
-                            previousMeasure.getTimestamp().getTime() + storageDataSampleUnitPeriodMillis,
+                            previousMeasure.getTimestamp().getTime(), // + storageDataSampleUnitPeriodMillis,
                             targetPeriodMillis,
                             currentSubIntervalMeasures
                     ));
@@ -89,8 +88,8 @@ public class SensorMeasureHistoryService {
         return sensorMeasuresResizedEquidistributedSubSamples;
     }
 
-    private SensorMeasuresEquidistributed resizeSubSample(long startTimeMillisIncl, long endTimeMillisIncl, long targetPeriodMillis, List<SensorMeasureHistoryDao> continuousStorageValuesTimeIncreasing){
-        int targetDataPointCount = toIntExact((endTimeMillisIncl - startTimeMillisIncl) / targetPeriodMillis);
+    private SensorMeasuresEquidistributed resizeSubSampleToTargetDataPointPeriodWithAverage(long startTimeMillisIncl, long endTimeMillisExcl, long targetPeriodMillis, List<SensorMeasureHistoryDao> continuousStorageValuesTimeIncreasing){
+        int targetDataPointCount = toIntExact((endTimeMillisExcl - startTimeMillisIncl) / targetPeriodMillis) + 1;
         List<Double> resizedSample = new ArrayList<>(targetDataPointCount);
         long nextPeriodStartTimeMillisIncl = startTimeMillisIncl + targetPeriodMillis;
         double accumulator = 0.0;
@@ -114,7 +113,7 @@ public class SensorMeasureHistoryService {
             resizedSample.add(accumulator / accCount);
         }
 
-        return new SensorMeasuresEquidistributed(startTimeMillisIncl, endTimeMillisIncl, targetPeriodMillis, resizedSample);
+        return new SensorMeasuresEquidistributed(startTimeMillisIncl, startTimeMillisIncl + resizedSample.size() * targetPeriodMillis, targetPeriodMillis, resizedSample);
     }
 
     private HistoricalDataStorageSizing findHistoricalDataStorageSizingWithNearestLowerPeriod(long intervalBeginSecondsIncl, long intervalEndSecondsIncl, int dataPointCount) {

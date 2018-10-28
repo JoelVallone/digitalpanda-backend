@@ -14,10 +14,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 import static junit.framework.TestCase.assertEquals;
@@ -42,35 +39,123 @@ public class SensorMeasureHistoryServiceTest {
     }
 
     @Test
-    public void getMeasuresWithContinuousEquidistributedSubIntervals_shouldReturnOneContinuousSubInterval() {
+    public void shouldReturnOneContinuousSubInterval_whenFullDataPoints() {
         //Given
-        long intervalStartMillis = REF_EPOCH_MILLIS;
-        long intervalEndMillis = REF_EPOCH_MILLIS + 6L* 1000L;
+        int expectedDataPointCount = 2;
+        long targetPeriodMillis = 3000L;
+        long intervalStartMillisIncl = REF_EPOCH_MILLIS;
+        long intervalEndMillisExcl = REF_EPOCH_MILLIS + targetPeriodMillis * expectedDataPointCount;
         List<Pair<Long, Double>> storedTimeValuePairs = buildTimeValuePairs(
                 new long[]    {0, 1000, 2000,  3000, 4000, 5000},
                 new double [] {1.0, 2.0, 3.0,  3.0, 4.0, 5.0}
         );
-        SensorMeasuresEquidistributed expectedSubInterval = new SensorMeasuresEquidistributed(
-                intervalStartMillis,
-                intervalEndMillis,
-                3000L,
+        List<SensorMeasuresEquidistributed> expectedSubInterval = Collections.singletonList(new SensorMeasuresEquidistributed(
+                intervalStartMillisIncl,
+                intervalEndMillisExcl,
+                targetPeriodMillis,
                 Arrays.asList(2.0, 4.0)
-        );
-        int expectedDataPointCount = 2;
+        ));
 
         when(sensorMeasureHistoryRepositoryMock.getMeasuresAtLocationWithInterval(
-                TEST_LOCATION, TEST_MEASURE_TYPE, TEST_AGGREGATE_TYPE, DEFAULT_STORAGE_SIZING, intervalStartMillis, intervalEndMillis))
+                TEST_LOCATION, TEST_MEASURE_TYPE, TEST_AGGREGATE_TYPE, DEFAULT_STORAGE_SIZING, intervalStartMillisIncl, intervalEndMillisExcl))
                     .thenReturn(generateStorageData(storedTimeValuePairs));
 
         //When
-        List<SensorMeasuresEquidistributed> actual = sensorMeasureHistoryService.getMeasuresWithContinuousEquidistributedSubIntervals(TEST_LOCATION, TEST_MEASURE_TYPE, intervalStartMillis, intervalEndMillis, expectedDataPointCount);
+        List<SensorMeasuresEquidistributed> actual = sensorMeasureHistoryService.getMeasuresWithContinuousEquidistributedSubIntervals(TEST_LOCATION, TEST_MEASURE_TYPE, intervalStartMillisIncl, intervalEndMillisExcl, expectedDataPointCount);
 
         //Then
-        assertEquals(1, actual.size());
-        assertEquals(expectedSubInterval, actual.get(0));
+        assertEquals(expectedSubInterval, actual);
     }
 
-    //TODO: Add more tests !!!!
+
+    @Test
+    public void shouldReturnOneContinuousSubIntervalWithOffset_whenSingleDataPoint() {
+        //Given
+        int expectedDataPointCount = 30;
+        long targetPeriodMillis = 3000L;
+        long intervalStartMillisIncl = REF_EPOCH_MILLIS;
+        long subIntervalShift = 5000L + (long) (targetPeriodMillis * SensorMeasureHistoryService.MAX_OUTPUT_MEASURES_JITTER);
+        long intervalEndMillisExcl = REF_EPOCH_MILLIS + targetPeriodMillis * expectedDataPointCount;
+        List<Pair<Long, Double>> storedTimeValuePairs = buildTimeValuePairs(
+                new long[]    {subIntervalShift},
+                new double [] {5.0}
+        );
+        List<SensorMeasuresEquidistributed> expectedSubInterval = Collections.singletonList(new SensorMeasuresEquidistributed(
+                REF_EPOCH_MILLIS + subIntervalShift,
+                REF_EPOCH_MILLIS + subIntervalShift + targetPeriodMillis,
+                targetPeriodMillis,
+                Collections.singletonList(5.0)
+        ));
+
+        when(sensorMeasureHistoryRepositoryMock.getMeasuresAtLocationWithInterval(
+                TEST_LOCATION, TEST_MEASURE_TYPE, TEST_AGGREGATE_TYPE, DEFAULT_STORAGE_SIZING, intervalStartMillisIncl, intervalEndMillisExcl))
+                .thenReturn(generateStorageData(storedTimeValuePairs));
+
+        //When
+        List<SensorMeasuresEquidistributed> actual = sensorMeasureHistoryService.getMeasuresWithContinuousEquidistributedSubIntervals(TEST_LOCATION, TEST_MEASURE_TYPE, intervalStartMillisIncl, intervalEndMillisExcl, expectedDataPointCount);
+
+        //Then
+        assertEquals(expectedSubInterval, actual);
+    }
+
+    @Test
+    public void shouldReturnTwoContinuousSubIntervalsWithOffset_whenMultipleDataPoints() {
+        //Given
+        int expectedDataPointCount = 30;
+        long targetPeriodMillis = 3000L;
+        long subIntervalShift = 5000L + (long) (targetPeriodMillis * SensorMeasureHistoryService.MAX_OUTPUT_MEASURES_JITTER);
+        long intervalStartMillisIncl = REF_EPOCH_MILLIS;
+        long intervalEndMillisExcl = REF_EPOCH_MILLIS + targetPeriodMillis * expectedDataPointCount;
+        List<Pair<Long, Double>> storedTimeValuePairs = buildTimeValuePairs(
+                new long[]    {1000, 2000, 3000,   4000,       subIntervalShift  , subIntervalShift + 1000L, subIntervalShift + 2000L, subIntervalShift + 3000L},
+                new double [] {1.0, 2.0, 3.0,   4.0,        3.0, 4.0, 5.0,                                                          6.0}
+        );
+        List<SensorMeasuresEquidistributed>  expectedSubIntervals = Arrays.asList(
+                new SensorMeasuresEquidistributed(
+                        REF_EPOCH_MILLIS + 1000L,
+                        REF_EPOCH_MILLIS + 1000L + 2*targetPeriodMillis,
+                        targetPeriodMillis,
+                        Arrays.asList(2.0, 4.0)
+                ),
+                new SensorMeasuresEquidistributed(
+                        REF_EPOCH_MILLIS + subIntervalShift,
+                        REF_EPOCH_MILLIS + subIntervalShift + 6000L,
+                        targetPeriodMillis,
+                        Arrays.asList(4.0, 6.0)
+                )
+        );
+
+        when(sensorMeasureHistoryRepositoryMock.getMeasuresAtLocationWithInterval(
+                TEST_LOCATION, TEST_MEASURE_TYPE, TEST_AGGREGATE_TYPE, DEFAULT_STORAGE_SIZING, intervalStartMillisIncl, intervalEndMillisExcl))
+                .thenReturn(generateStorageData(storedTimeValuePairs));
+
+        //When
+        List<SensorMeasuresEquidistributed> actual = sensorMeasureHistoryService.getMeasuresWithContinuousEquidistributedSubIntervals(TEST_LOCATION, TEST_MEASURE_TYPE, intervalStartMillisIncl, intervalEndMillisExcl, expectedDataPointCount);
+
+        //Then
+        assertEquals(expectedSubIntervals, actual);
+    }
+
+    @Test
+    public void shouldReturnAnEmptyList_WhenNoDataPoint() {
+        //Given
+        int expectedDataPointCount = 2;
+        long targetPeriodMillis = 3000L;
+        long intervalStartMillisIncl = REF_EPOCH_MILLIS;
+        long intervalEndMillisExcl = REF_EPOCH_MILLIS + targetPeriodMillis * expectedDataPointCount;
+
+        when(sensorMeasureHistoryRepositoryMock.getMeasuresAtLocationWithInterval(
+                TEST_LOCATION, TEST_MEASURE_TYPE, TEST_AGGREGATE_TYPE, DEFAULT_STORAGE_SIZING, intervalStartMillisIncl, intervalEndMillisExcl))
+                .thenReturn(Collections.emptyList());
+
+        //When
+        List<SensorMeasuresEquidistributed> actual = sensorMeasureHistoryService.getMeasuresWithContinuousEquidistributedSubIntervals(TEST_LOCATION, TEST_MEASURE_TYPE, intervalStartMillisIncl, intervalEndMillisExcl, expectedDataPointCount);
+
+        //Then
+        assertEquals(0, actual.size());
+    }
+
+    //TODO: Consider adding more test cases
 
     private List<Pair<Long, Double>> buildTimeValuePairs(long [] timestampsDeltaMillis, double [] values){
         if(timestampsDeltaMillis.length != values.length)

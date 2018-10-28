@@ -6,16 +6,16 @@ import java.util.Objects;
 public class SensorMeasuresEquidistributed {
 
     private long startTimeMillisIncl;
-    private long endTimeMillisIncl;
+    private long endTimeMillisExcl;
     private long targetPeriodMillis;
     private List<Double> equidistributedValues;
 
     public SensorMeasuresEquidistributed() {
     }
 
-    public SensorMeasuresEquidistributed(long startTimeMillisIncl, long endTimeMillisIncl, long targetPeriodMillis, List<Double> equidistributedValues) {
+    public SensorMeasuresEquidistributed(long startTimeMillisIncl, long endTimeMillisExcl, long targetPeriodMillis, List<Double> equidistributedValues) {
         this.startTimeMillisIncl = startTimeMillisIncl;
-        this.endTimeMillisIncl = endTimeMillisIncl;
+        this.endTimeMillisExcl = endTimeMillisExcl;
         this.targetPeriodMillis = targetPeriodMillis;
         this.equidistributedValues = equidistributedValues;
     }
@@ -28,12 +28,12 @@ public class SensorMeasuresEquidistributed {
         this.startTimeMillisIncl = startTimeMillisIncl;
     }
 
-    public long getEndTimeMillisIncl() {
-        return endTimeMillisIncl;
+    public long getEndTimeMillisExcl() {
+        return endTimeMillisExcl;
     }
 
-    public void setEndTimeMillisIncl(long endTimeMillisIncl) {
-        this.endTimeMillisIncl = endTimeMillisIncl;
+    public void setEndTimeMillisExcl(long endTimeMillisExcl) {
+        this.endTimeMillisExcl = endTimeMillisExcl;
     }
 
     public long getTargetPeriodMillis() {
@@ -58,21 +58,21 @@ public class SensorMeasuresEquidistributed {
         if (o == null || getClass() != o.getClass()) return false;
         SensorMeasuresEquidistributed that = (SensorMeasuresEquidistributed) o;
         return startTimeMillisIncl == that.startTimeMillisIncl &&
-                endTimeMillisIncl == that.endTimeMillisIncl &&
+                endTimeMillisExcl == that.endTimeMillisExcl &&
                 targetPeriodMillis == that.targetPeriodMillis &&
                 Objects.equals(equidistributedValues, that.equidistributedValues);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(startTimeMillisIncl, endTimeMillisIncl, targetPeriodMillis, equidistributedValues);
+        return Objects.hash(startTimeMillisIncl, endTimeMillisExcl, targetPeriodMillis, equidistributedValues);
     }
 
     @Override
     public String toString() {
         return "SensorMeasuresEquidistributed{" +
                 "startTimeMillisIncl=" + startTimeMillisIncl +
-                ", endTimeMillisIncl=" + endTimeMillisIncl +
+                ", endTimeMillisExcl=" + endTimeMillisExcl +
                 ", targetPeriodMillis=" + targetPeriodMillis +
                 ", equidistributedValues=" + equidistributedValues +
                 '}';
