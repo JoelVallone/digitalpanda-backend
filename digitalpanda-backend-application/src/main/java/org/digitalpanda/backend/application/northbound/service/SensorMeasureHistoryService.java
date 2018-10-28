@@ -15,7 +15,7 @@ import static org.digitalpanda.backend.application.persistence.measure.history.S
 
 public class SensorMeasureHistoryService {
 
-    public static final double MEASURE_JITTER = 1.2;
+    public static final double MAX_OUTPUT_MEASURES_JITTER = 1.2;
     public static final int MAX_ROW_COUNT = 55*1000*1000 / ROW_SIZE_BYTES; //~55 MiB of data ~= 581'395 data points with second period ~= 7.4 days sample size !
 
     private SensorMeasureHistoryRepository sensorMeasureHistoryRepository;
@@ -25,7 +25,6 @@ public class SensorMeasureHistoryService {
         this.sensorMeasureHistoryRepository = sensorMeasureHistoryRepository;
     }
 
-    //TODO: Write unit tests !!!
     public List<SensorMeasuresEquidistributed> getMeasuresWithContinuousEquidistributedSubIntervals(
             String location, SensorMeasureType sensorMeasureType, long startTimeMillisIncl, long endTimeMillisIncl, int dataPointCount) {
         HistoricalDataStorageSizing storageSizingWithNearestLowerPeriod = findHistoricalDataStorageSizingWithNearestLowerPeriod(startTimeMillisIncl, endTimeMillisIncl, dataPointCount);
@@ -36,20 +35,18 @@ public class SensorMeasureHistoryService {
         }
         List<SensorMeasureHistoryDao> storageValuesTimeIncreasing = loadMeasuresIncreasingOrder(location, sensorMeasureType, startTimeMillisIncl, trimmedEndTimeMillisIncl, storageSizingWithNearestLowerPeriod);
 
-        return resizeSample(startTimeMillisIncl, endTimeMillisIncl, dataPointCount, storageValuesTimeIncreasing);
+        return resizeSample(startTimeMillisIncl, endTimeMillisIncl, dataPointCount, storageValuesTimeIncreasing, storageSizingWithNearestLowerPeriod);
     }
 
-    //TODO: Write unit tests !!!
-    private List<SensorMeasuresEquidistributed> resizeSample(long startTimeMillisIncl, long endTimeMillisIncl, int targetDataPointCount, List<SensorMeasureHistoryDao> storedMeasuresTimeIncreasing) {
+    private List<SensorMeasuresEquidistributed> resizeSample(long startTimeMillisIncl, long endTimeMillisIncl, int targetDataPointCount, List<SensorMeasureHistoryDao> storedMeasuresTimeIncreasing, HistoricalDataStorageSizing historicalDataStorageSizing) {
         if(storedMeasuresTimeIncreasing.size() == 0)
             return Collections.emptyList();
 
-        final long targetPeriodMillis = (startTimeMillisIncl - endTimeMillisIncl) / targetDataPointCount;
+        final long targetPeriodMillis = (endTimeMillisIncl - startTimeMillisIncl) / targetDataPointCount;
         if (targetPeriodMillis < 1000)
             throw new RuntimeException("Historical data sample bellow second period is not supported");
 
-        long measurePeriodMillis = storedMeasuresTimeIncreasing.get(0).getTimeBlockPeriodSeconds() * 1000;
-
+        long storageDataSampleUnitPeriodMillis = historicalDataStorageSizing.getAggregateIntervalSeconds() * 1000;
         List<SensorMeasuresEquidistributed> sensorMeasuresResizedEquidistributedSubSamples = new ArrayList<>();
         List<SensorMeasureHistoryDao> currentSubIntervalMeasures = new ArrayList<>();
         long curentSubSampleStartIntervalMillis = startTimeMillisIncl;
@@ -61,11 +58,11 @@ public class SensorMeasureHistoryService {
             //If the next measure creates a discontinuity:
             // 1) Perform resizing with the accumulated sub sample of data points
             // 2) Start a new sub sample interval
-            if (currentMeasure.getTimestamp().getTime() > previousMeasure.getTimestamp().getTime() + (long) (measurePeriodMillis * MEASURE_JITTER)) {
+            if (currentMeasure.getTimestamp().getTime() > previousMeasure.getTimestamp().getTime() + (long) (targetPeriodMillis * MAX_OUTPUT_MEASURES_JITTER)) {
                 sensorMeasuresResizedEquidistributedSubSamples.add(
                         resizeSubSample(
                             curentSubSampleStartIntervalMillis,
-                            previousMeasure.getTimestamp().getTime(),
+                            previousMeasure.getTimestamp().getTime() + storageDataSampleUnitPeriodMillis,
                             targetPeriodMillis,
                             currentSubIntervalMeasures
                 ));
@@ -83,7 +80,7 @@ public class SensorMeasureHistoryService {
             sensorMeasuresResizedEquidistributedSubSamples.add(
                     resizeSubSample(
                             curentSubSampleStartIntervalMillis,
-                            previousMeasure.getTimestamp().getTime(),
+                            previousMeasure.getTimestamp().getTime() + storageDataSampleUnitPeriodMillis,
                             targetPeriodMillis,
                             currentSubIntervalMeasures
                     ));
@@ -92,7 +89,6 @@ public class SensorMeasureHistoryService {
         return sensorMeasuresResizedEquidistributedSubSamples;
     }
 
-    //TODO: Write unit tests !!!
     private SensorMeasuresEquidistributed resizeSubSample(long startTimeMillisIncl, long endTimeMillisIncl, long targetPeriodMillis, List<SensorMeasureHistoryDao> continuousStorageValuesTimeIncreasing){
         int targetDataPointCount = toIntExact((endTimeMillisIncl - startTimeMillisIncl) / targetPeriodMillis);
         List<Double> resizedSample = new ArrayList<>(targetDataPointCount);
@@ -100,11 +96,8 @@ public class SensorMeasureHistoryService {
         double accumulator = 0.0;
         int accCount = 0;
         for (SensorMeasureHistoryDao sensorMeasureDao : continuousStorageValuesTimeIncreasing) {
-            if (sensorMeasureDao.getTimestamp().getTime() < nextPeriodStartTimeMillisIncl) {
-                accumulator += sensorMeasureDao.getValue();
-                accCount++;
-            } else {
-                nextPeriodStartTimeMillisIncl = ((nextPeriodStartTimeMillisIncl % targetPeriodMillis) + 1) * targetPeriodMillis * 1000;
+            if (sensorMeasureDao.getTimestamp().getTime() >= nextPeriodStartTimeMillisIncl) {
+                nextPeriodStartTimeMillisIncl += targetPeriodMillis;
                 if (accCount != 0) {
                     resizedSample.add(accumulator / accCount);
                 } else {
@@ -113,6 +106,9 @@ public class SensorMeasureHistoryService {
                 accCount = 0;
                 accumulator = 0.0;
             }
+
+            accumulator += sensorMeasureDao.getValue();
+            accCount++;
         }
         if (accCount != 0) {
             resizedSample.add(accumulator / accCount);

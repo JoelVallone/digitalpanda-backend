@@ -1,6 +1,7 @@
 package org.digitalpanda.backend.application.northbound.service;
 
 import java.util.List;
+import java.util.Objects;
 
 public class SensorMeasuresEquidistributed {
 
@@ -49,6 +50,22 @@ public class SensorMeasuresEquidistributed {
 
     public void setEquidistributedValues(List<Double> equidistributedValues) {
         this.equidistributedValues = equidistributedValues;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SensorMeasuresEquidistributed that = (SensorMeasuresEquidistributed) o;
+        return startTimeMillisIncl == that.startTimeMillisIncl &&
+                endTimeMillisIncl == that.endTimeMillisIncl &&
+                targetPeriodMillis == that.targetPeriodMillis &&
+                Objects.equals(equidistributedValues, that.equidistributedValues);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(startTimeMillisIncl, endTimeMillisIncl, targetPeriodMillis, equidistributedValues);
     }
 
     @Override

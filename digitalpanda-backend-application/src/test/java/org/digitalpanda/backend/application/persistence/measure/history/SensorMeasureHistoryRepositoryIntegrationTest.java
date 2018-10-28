@@ -21,7 +21,7 @@ import static org.digitalpanda.backend.application.persistence.measure.SensorMea
 public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWithSpringBaseTest {
 
     private static final SensorMeasureType TARGET_MEASURE_TYPE = SensorMeasureType.TEMPERATURE;
-    private static final AggregateType TARGET_AGGREGATE_TYPE = AggregateType.AVG;
+    private static final AggregateType TARGET_AGGREGATE_TYPE = AggregateType.AVERAGE;
     private static final HistoricalDataStorageSizing TARGET_HISTORICAL_DATA_SIZING = HistoricalDataStorageSizing.SECOND_PRECISION_RAW;
     private static final String TEST_LOCATION = "SomewhereNearMyComputer";
 

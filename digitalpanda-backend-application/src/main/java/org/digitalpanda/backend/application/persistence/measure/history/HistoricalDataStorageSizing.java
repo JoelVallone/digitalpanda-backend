@@ -16,7 +16,7 @@ Cassandra: Maximum partition size : 50 MiB,
     => 500 k records
 */
 public enum HistoricalDataStorageSizing {
-    SECOND_PRECISION_RAW(1L, AggregateType.VAL); //Raw data provided by sensor network
+    SECOND_PRECISION_RAW(1L, AggregateType.VALUE); //Raw data provided by sensor network
     //MINUTE_PRECISION_AGGREGATE(60L, AggregateType.AVG); //TODO: Possible DB-stored output of batch processing aggregate on sensor network raw data
 
     public static final long MAX_TABLE_PARTITION_SIZE_BYTES = 50 * (1L << 20);

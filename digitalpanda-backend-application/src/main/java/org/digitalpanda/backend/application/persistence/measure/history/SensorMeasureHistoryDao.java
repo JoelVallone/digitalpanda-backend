@@ -39,6 +39,20 @@ public class SensorMeasureHistoryDao {
     @Column
     private double value;
 
+    public SensorMeasureHistoryDao() {
+    }
+
+    public SensorMeasureHistoryDao(String location, Long timeBlockPeriodSeconds, Long timeBlockId, String measureType, String aggregateType, Integer bucket, Date timestamp, double value) {
+        this.location = location;
+        this.timeBlockPeriodSeconds = timeBlockPeriodSeconds;
+        this.timeBlockId = timeBlockId;
+        this.measureType = measureType;
+        this.aggregateType = aggregateType;
+        this.bucket = bucket;
+        this.timestamp = timestamp;
+        this.value = value;
+    }
+
     @Override
     public String toString() {
         return "SensorMeasureHistoryDao{" +
