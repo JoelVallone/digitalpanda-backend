@@ -1,9 +1,8 @@
 package org.digitalpanda.backend.application.northbound.service;
 
-import org.digitalpanda.backend.application.northbound.ressource.measure.SensorMeasureUiController;
 import org.digitalpanda.backend.application.persistence.measure.history.AggregateType;
 import org.digitalpanda.backend.application.persistence.measure.history.HistoricalDataStorageSizing;
-import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistoryDao;
+import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistorySecondsDao;
 import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistoryRepository;
 import org.digitalpanda.backend.application.util.Pair;
 import org.digitalpanda.backend.data.SensorMeasureType;
@@ -25,7 +24,6 @@ public class SensorMeasureHistoryServiceTest {
 
     private static final String TEST_LOCATION = "testLocation";
     private static final SensorMeasureType TEST_MEASURE_TYPE = SensorMeasureType.TEMPERATURE;
-    private static final AggregateType TEST_AGGREGATE_TYPE = AggregateType.VALUE;
     private static final HistoricalDataStorageSizing DEFAULT_STORAGE_SIZING = HistoricalDataStorageSizing.SECOND_PRECISION_RAW;
     private static final long REF_EPOCH_MILLIS = 1540714000000L;
 
@@ -57,11 +55,13 @@ public class SensorMeasureHistoryServiceTest {
         ));
 
         when(sensorMeasureHistoryRepositoryMock.getMeasuresAtLocationWithInterval(
-                TEST_LOCATION, TEST_MEASURE_TYPE, TEST_AGGREGATE_TYPE, DEFAULT_STORAGE_SIZING, intervalStartMillisIncl, intervalEndMillisExcl))
+                TEST_LOCATION, TEST_MEASURE_TYPE, DEFAULT_STORAGE_SIZING, intervalStartMillisIncl, intervalEndMillisExcl))
                     .thenReturn(generateStorageData(storedTimeValuePairs));
 
         //When
-        List<SensorMeasuresEquidistributed> actual = sensorMeasureHistoryService.getMeasuresWithContinuousEquidistributedSubIntervals(TEST_LOCATION, TEST_MEASURE_TYPE, intervalStartMillisIncl, intervalEndMillisExcl, expectedDataPointCount);
+        List<SensorMeasuresEquidistributed> actual = sensorMeasureHistoryService
+                .getMeasuresWithContinuousEquidistributedSubIntervals(
+                        TEST_LOCATION, TEST_MEASURE_TYPE, intervalStartMillisIncl, intervalEndMillisExcl, expectedDataPointCount);
 
         //Then
         assertEquals(expectedSubInterval, actual);
@@ -88,11 +88,13 @@ public class SensorMeasureHistoryServiceTest {
         ));
 
         when(sensorMeasureHistoryRepositoryMock.getMeasuresAtLocationWithInterval(
-                TEST_LOCATION, TEST_MEASURE_TYPE, TEST_AGGREGATE_TYPE, DEFAULT_STORAGE_SIZING, intervalStartMillisIncl, intervalEndMillisExcl))
+                TEST_LOCATION, TEST_MEASURE_TYPE, DEFAULT_STORAGE_SIZING, intervalStartMillisIncl, intervalEndMillisExcl))
                 .thenReturn(generateStorageData(storedTimeValuePairs));
 
         //When
-        List<SensorMeasuresEquidistributed> actual = sensorMeasureHistoryService.getMeasuresWithContinuousEquidistributedSubIntervals(TEST_LOCATION, TEST_MEASURE_TYPE, intervalStartMillisIncl, intervalEndMillisExcl, expectedDataPointCount);
+        List<SensorMeasuresEquidistributed> actual = sensorMeasureHistoryService.
+                getMeasuresWithContinuousEquidistributedSubIntervals(
+                        TEST_LOCATION, TEST_MEASURE_TYPE, intervalStartMillisIncl, intervalEndMillisExcl, expectedDataPointCount);
 
         //Then
         assertEquals(expectedSubInterval, actual);
@@ -126,11 +128,13 @@ public class SensorMeasureHistoryServiceTest {
         );
 
         when(sensorMeasureHistoryRepositoryMock.getMeasuresAtLocationWithInterval(
-                TEST_LOCATION, TEST_MEASURE_TYPE, TEST_AGGREGATE_TYPE, DEFAULT_STORAGE_SIZING, intervalStartMillisIncl, intervalEndMillisExcl))
+                TEST_LOCATION, TEST_MEASURE_TYPE, DEFAULT_STORAGE_SIZING, intervalStartMillisIncl, intervalEndMillisExcl))
                 .thenReturn(generateStorageData(storedTimeValuePairs));
 
         //When
-        List<SensorMeasuresEquidistributed> actual = sensorMeasureHistoryService.getMeasuresWithContinuousEquidistributedSubIntervals(TEST_LOCATION, TEST_MEASURE_TYPE, intervalStartMillisIncl, intervalEndMillisExcl, expectedDataPointCount);
+        List<SensorMeasuresEquidistributed> actual = sensorMeasureHistoryService
+                .getMeasuresWithContinuousEquidistributedSubIntervals(
+                        TEST_LOCATION, TEST_MEASURE_TYPE, intervalStartMillisIncl, intervalEndMillisExcl, expectedDataPointCount);
 
         //Then
         assertEquals(expectedSubIntervals, actual);
@@ -145,11 +149,13 @@ public class SensorMeasureHistoryServiceTest {
         long intervalEndMillisExcl = REF_EPOCH_MILLIS + targetPeriodMillis * expectedDataPointCount;
 
         when(sensorMeasureHistoryRepositoryMock.getMeasuresAtLocationWithInterval(
-                TEST_LOCATION, TEST_MEASURE_TYPE, TEST_AGGREGATE_TYPE, DEFAULT_STORAGE_SIZING, intervalStartMillisIncl, intervalEndMillisExcl))
+                TEST_LOCATION, TEST_MEASURE_TYPE, DEFAULT_STORAGE_SIZING, intervalStartMillisIncl, intervalEndMillisExcl))
                 .thenReturn(Collections.emptyList());
 
         //When
-        List<SensorMeasuresEquidistributed> actual = sensorMeasureHistoryService.getMeasuresWithContinuousEquidistributedSubIntervals(TEST_LOCATION, TEST_MEASURE_TYPE, intervalStartMillisIncl, intervalEndMillisExcl, expectedDataPointCount);
+        List<SensorMeasuresEquidistributed> actual = sensorMeasureHistoryService
+                .getMeasuresWithContinuousEquidistributedSubIntervals(
+                        TEST_LOCATION, TEST_MEASURE_TYPE, intervalStartMillisIncl, intervalEndMillisExcl, expectedDataPointCount);
 
         //Then
         assertEquals(0, actual.size());
@@ -171,15 +177,14 @@ public class SensorMeasureHistoryServiceTest {
         return timeValuePairs;
     }
 
-    private List<SensorMeasureHistoryDao> generateStorageData(List<Pair<Long, Double>> timeValuePairs) {
+    private List<SensorMeasureHistorySecondsDao> generateStorageData(List<Pair<Long, Double>> timeValuePairs) {
         return timeValuePairs.stream()
                 .map(timeValuePair ->
-                        new SensorMeasureHistoryDao(
+                        new SensorMeasureHistorySecondsDao(
                                 TEST_LOCATION,
                                 DEFAULT_STORAGE_SIZING.getTimeBlockPeriodSeconds(),
                                 -1L,
                                 TEST_MEASURE_TYPE.name(),
-                                TEST_AGGREGATE_TYPE.name(),
                                 0,
                                 Date.from(Instant.ofEpochMilli(timeValuePair.getFirst())),
                                 timeValuePair.getSecond()

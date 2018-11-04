@@ -8,10 +8,10 @@ import org.springframework.data.cassandra.core.mapping.Table;
 import java.util.Date;
 import java.util.Objects;
 
-@Table(SensorMeasureHistoryDao.SENSOR_MEASURE_HISTORY_TABLE_NAME) //Record max size rough estimation : 20 + 8 + 8 + 4 + 8 + 20 + 10 + 8 (86) Bytes
-public class SensorMeasureHistoryDao {
+@Table(SensorMeasureHistorySecondsDao.SENSOR_MEASURE_HISTORY_TABLE_NAME) //Record max size rough estimation : 20 + 8 + 8 + 4 + 8 + 20 + 10 + 8 (86) Bytes
+public class SensorMeasureHistorySecondsDao {
 
-    public static final String SENSOR_MEASURE_HISTORY_TABLE_NAME = "sensor_measure_history";
+    public static final String SENSOR_MEASURE_HISTORY_TABLE_NAME = "sensor_measure_history_seconds";
     public static final int SENSOR_MEASURE_DEFAULT_BUCKET_ID = 0;
     public static final int ROW_SIZE_BYTES = 86;
 
@@ -27,9 +27,6 @@ public class SensorMeasureHistoryDao {
     @PrimaryKeyColumn(name = "measure_type", ordinal = 3, type = PrimaryKeyType.PARTITIONED)
     private String measureType;
 
-    @PrimaryKeyColumn(name = "aggregate_type", ordinal = 4, type = PrimaryKeyType.PARTITIONED)
-    private String aggregateType;
-
     @PrimaryKeyColumn(name = "bucket", ordinal = 5, type = PrimaryKeyType.PARTITIONED)
     private Integer bucket;
 
@@ -39,15 +36,14 @@ public class SensorMeasureHistoryDao {
     @Column
     private double value;
 
-    public SensorMeasureHistoryDao() {
+    public SensorMeasureHistorySecondsDao() {
     }
 
-    public SensorMeasureHistoryDao(String location, Long timeBlockPeriodSeconds, Long timeBlockId, String measureType, String aggregateType, Integer bucket, Date timestamp, double value) {
+    public SensorMeasureHistorySecondsDao(String location, Long timeBlockPeriodSeconds, Long timeBlockId, String measureType, Integer bucket, Date timestamp, double value) {
         this.location = location;
         this.timeBlockPeriodSeconds = timeBlockPeriodSeconds;
         this.timeBlockId = timeBlockId;
         this.measureType = measureType;
-        this.aggregateType = aggregateType;
         this.bucket = bucket;
         this.timestamp = timestamp;
         this.value = value;
@@ -55,12 +51,11 @@ public class SensorMeasureHistoryDao {
 
     @Override
     public String toString() {
-        return "SensorMeasureHistoryDao{" +
+        return "SensorMeasureHistorySecondsDao{" +
                 "location='" + location + '\'' +
                 ", timeBlockPeriodSeconds=" + timeBlockPeriodSeconds +
                 ", timeBlockId=" + timeBlockId +
                 ", measureType='" + measureType + '\'' +
-                ", aggregateType='" + aggregateType + '\'' +
                 ", bucket=" + bucket +
                 ", timestamp=" + timestamp +
                 ", value=" + value +
@@ -115,14 +110,6 @@ public class SensorMeasureHistoryDao {
         this.measureType = measureType;
     }
 
-    public String getAggregateType() {
-        return aggregateType;
-    }
-
-    public void setAggregateType(String aggregateType) {
-        this.aggregateType = aggregateType;
-    }
-
     public double getValue() {
         return value;
     }
@@ -135,20 +122,19 @@ public class SensorMeasureHistoryDao {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SensorMeasureHistoryDao that = (SensorMeasureHistoryDao) o;
+        SensorMeasureHistorySecondsDao that = (SensorMeasureHistorySecondsDao) o;
         return Double.compare(that.value, value) == 0 &&
                 Objects.equals(location, that.location) &&
                 Objects.equals(timeBlockPeriodSeconds, that.timeBlockPeriodSeconds) &&
                 Objects.equals(timeBlockId, that.timeBlockId) &&
                 Objects.equals(bucket, that.bucket) &&
                 Objects.equals(timestamp, that.timestamp) &&
-                Objects.equals(measureType, that.measureType) &&
-                Objects.equals(aggregateType, that.aggregateType);
+                Objects.equals(measureType, that.measureType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(location, timeBlockPeriodSeconds, timeBlockId, bucket, timestamp, measureType, aggregateType, value);
+        return Objects.hash(location, timeBlockPeriodSeconds, timeBlockId, bucket, timestamp, measureType, value);
     }
 
 }

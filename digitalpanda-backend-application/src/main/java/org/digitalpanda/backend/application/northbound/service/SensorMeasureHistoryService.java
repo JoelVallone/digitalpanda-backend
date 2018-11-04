@@ -1,17 +1,16 @@
 package org.digitalpanda.backend.application.northbound.service;
 
 import org.digitalpanda.backend.application.persistence.measure.history.HistoricalDataStorageSizing;
-import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistoryDao;
+import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistorySecondsDao;
 import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistoryRepository;
 import org.digitalpanda.backend.data.SensorMeasureType;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.Instant;
 import java.util.*;
 
 import static java.lang.Math.toIntExact;
 import static java.util.stream.Collectors.toList;
-import static org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistoryDao.ROW_SIZE_BYTES;
+import static org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistorySecondsDao.ROW_SIZE_BYTES;
 
 public class SensorMeasureHistoryService {
 
@@ -33,12 +32,12 @@ public class SensorMeasureHistoryService {
         if((endTimeMillisExcl - startTimeMillisIncl) / (storageSizingWithNearestLowerPeriod.getTimeBlockPeriodSeconds()*1000)  > MAX_ROW_COUNT) {
             trimmedEndTimeMillisIncl = startTimeMillisIncl + (storageSizingWithNearestLowerPeriod.getTimeBlockPeriodSeconds() * 1000 * MAX_ROW_COUNT);
         }
-        List<SensorMeasureHistoryDao> storageValuesTimeIncreasing = loadMeasuresIncreasingOrder(location, sensorMeasureType, startTimeMillisIncl, trimmedEndTimeMillisIncl, storageSizingWithNearestLowerPeriod);
+        List<SensorMeasureHistorySecondsDao> storageValuesTimeIncreasing = loadMeasuresIncreasingOrder(location, sensorMeasureType, startTimeMillisIncl, trimmedEndTimeMillisIncl, storageSizingWithNearestLowerPeriod);
 
         return resizeSample(startTimeMillisIncl, endTimeMillisExcl, dataPointCount, storageValuesTimeIncreasing, storageSizingWithNearestLowerPeriod);
     }
 
-    private List<SensorMeasuresEquidistributed> resizeSample(long startTimeMillisIncl, long endTimeMillisExcl, int targetDataPointCount, List<SensorMeasureHistoryDao> storedMeasuresTimeIncreasing, HistoricalDataStorageSizing historicalDataStorageSizing) {
+    private List<SensorMeasuresEquidistributed> resizeSample(long startTimeMillisIncl, long endTimeMillisExcl, int targetDataPointCount, List<SensorMeasureHistorySecondsDao> storedMeasuresTimeIncreasing, HistoricalDataStorageSizing historicalDataStorageSizing) {
         if(storedMeasuresTimeIncreasing.size() == 0)
             return Collections.emptyList();
 
@@ -48,12 +47,12 @@ public class SensorMeasureHistoryService {
 
         long storageDataSampleUnitPeriodMillis = historicalDataStorageSizing.getAggregateIntervalSeconds() * 1000;
         List<SensorMeasuresEquidistributed> sensorMeasuresResizedEquidistributedSubSamples = new ArrayList<>();
-        List<SensorMeasureHistoryDao> currentSubIntervalMeasures = new ArrayList<>();
+        List<SensorMeasureHistorySecondsDao> currentSubIntervalMeasures = new ArrayList<>();
         long curentSubSampleStartIntervalMillis = storedMeasuresTimeIncreasing.get(0).getTimestamp().getTime();
 
-        SensorMeasureHistoryDao previousMeasure = storedMeasuresTimeIncreasing.get(0);
+        SensorMeasureHistorySecondsDao previousMeasure = storedMeasuresTimeIncreasing.get(0);
 
-        for (SensorMeasureHistoryDao currentMeasure : storedMeasuresTimeIncreasing) {
+        for (SensorMeasureHistorySecondsDao currentMeasure : storedMeasuresTimeIncreasing) {
             //If the next measure creates a discontinuity:
             // 1) Perform resizing with the accumulated sub sample of data points
             // 2) Start a new sub sample interval
@@ -88,13 +87,13 @@ public class SensorMeasureHistoryService {
         return sensorMeasuresResizedEquidistributedSubSamples;
     }
 
-    private SensorMeasuresEquidistributed resizeSubSampleToTargetDataPointPeriodWithAverage(long startTimeMillisIncl, long endTimeMillisExcl, long targetPeriodMillis, List<SensorMeasureHistoryDao> continuousStorageValuesTimeIncreasing){
+    private SensorMeasuresEquidistributed resizeSubSampleToTargetDataPointPeriodWithAverage(long startTimeMillisIncl, long endTimeMillisExcl, long targetPeriodMillis, List<SensorMeasureHistorySecondsDao> continuousStorageValuesTimeIncreasing){
         int targetDataPointCount = toIntExact((endTimeMillisExcl - startTimeMillisIncl) / targetPeriodMillis) + 1;
         List<Double> resizedSample = new ArrayList<>(targetDataPointCount);
         long nextPeriodStartTimeMillisIncl = startTimeMillisIncl + targetPeriodMillis;
         double accumulator = 0.0;
         int accCount = 0;
-        for (SensorMeasureHistoryDao sensorMeasureDao : continuousStorageValuesTimeIncreasing) {
+        for (SensorMeasureHistorySecondsDao sensorMeasureDao : continuousStorageValuesTimeIncreasing) {
             if (sensorMeasureDao.getTimestamp().getTime() >= nextPeriodStartTimeMillisIncl) {
                 nextPeriodStartTimeMillisIncl += targetPeriodMillis;
                 if (accCount != 0) {
@@ -121,13 +120,11 @@ public class SensorMeasureHistoryService {
         return HistoricalDataStorageSizing.SECOND_PRECISION_RAW;
     }
 
-    private List<SensorMeasureHistoryDao> loadMeasuresIncreasingOrder(String location, SensorMeasureType sensorMeasureType, long startTimeMillisIncl, long endTimeMillisIncl, HistoricalDataStorageSizing storageSizingWithNearestPeriod) {
-        //TODO: consider cassandra storage layout change : split table by aggregate granularity
+    private List<SensorMeasureHistorySecondsDao> loadMeasuresIncreasingOrder(String location, SensorMeasureType sensorMeasureType, long startTimeMillisIncl, long endTimeMillisIncl, HistoricalDataStorageSizing storageSizingWithNearestPeriod) {
         return sensorMeasureHistoryRepository
                 .getMeasuresAtLocationWithInterval(
                         location,
                         sensorMeasureType,
-                        storageSizingWithNearestPeriod.getAggregateType(),
                         storageSizingWithNearestPeriod,
                         startTimeMillisIncl,
                         endTimeMillisIncl).stream()

@@ -21,7 +21,6 @@ import static org.digitalpanda.backend.application.persistence.measure.SensorMea
 public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWithSpringBaseTest {
 
     private static final SensorMeasureType TARGET_MEASURE_TYPE = SensorMeasureType.TEMPERATURE;
-    private static final AggregateType TARGET_AGGREGATE_TYPE = AggregateType.AVERAGE;
     private static final HistoricalDataStorageSizing TARGET_HISTORICAL_DATA_SIZING = HistoricalDataStorageSizing.SECOND_PRECISION_RAW;
     private static final String TEST_LOCATION = "SomewhereNearMyComputer";
 
@@ -34,7 +33,7 @@ public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWith
     @Before
     public void createTable() {
         adminTemplate.createTable(
-                true, CqlIdentifier.of(SensorMeasureHistoryDao.SENSOR_MEASURE_HISTORY_TABLE_NAME), SensorMeasureLatestDao.class, new HashMap<>());
+                true, CqlIdentifier.of(SensorMeasureHistorySecondsDao.SENSOR_MEASURE_HISTORY_TABLE_NAME), SensorMeasureLatestDao.class, new HashMap<>());
     }
 
     @Test
@@ -42,27 +41,26 @@ public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWith
         //Given
         //  => Data in table partition 1
         long timestampMillisFirstElementFirstPartition = 1545695999000L;
-        List<SensorMeasureHistoryDao> firstPartition = measureSequence(Collections.singletonList(
+        List<SensorMeasureHistorySecondsDao> firstPartition = measureSequence(Collections.singletonList(
                 new Pair<>(timestampMillisFirstElementFirstPartition, 1.14159)));
         //  => Data in table partition 2
         long timestampMillisFirstElementSecondPartition =
                 (getHistoricalMeasureBlockId(timestampMillisFirstElementFirstPartition, TARGET_HISTORICAL_DATA_SIZING) + 1)
                         * TARGET_HISTORICAL_DATA_SIZING.getTimeBlockPeriodSeconds() * 1000L;
         long timestampMillisSecondElementSecondPartition = timestampMillisFirstElementSecondPartition + 1000L;
-        List<SensorMeasureHistoryDao> secondPartition = measureSequence(Arrays.asList(
+        List<SensorMeasureHistorySecondsDao> secondPartition = measureSequence(Arrays.asList(
             new Pair<>(timestampMillisFirstElementSecondPartition, 2.14159),
             new Pair<>(timestampMillisSecondElementSecondPartition, 3.14159)));
 
-        List<SensorMeasureHistoryDao> dataToStore = new ArrayList<>(firstPartition);
+        List<SensorMeasureHistorySecondsDao> dataToStore = new ArrayList<>(firstPartition);
         dataToStore.addAll(secondPartition);
 
         //When
-        repository.saveAll(dataToStore);
-        List<SensorMeasureHistoryDao> actual = repository
+        repository.saveAllSecondPrecisionMeasures(dataToStore);
+        List<SensorMeasureHistorySecondsDao> actual = repository
                 .getMeasuresAtLocationWithInterval(
                     TEST_LOCATION,
                     TARGET_MEASURE_TYPE,
-                    TARGET_AGGREGATE_TYPE,
                     TARGET_HISTORICAL_DATA_SIZING,
                     timestampMillisFirstElementFirstPartition,
                     timestampMillisFirstElementSecondPartition);
@@ -73,16 +71,15 @@ public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWith
         assertEquals(secondPartition.get(0), actual.get(1));
     }
 
-    private List<SensorMeasureHistoryDao> measureSequence(List<Pair<Long, Double>> timestampedMeasures){
+    private List<SensorMeasureHistorySecondsDao> measureSequence(List<Pair<Long, Double>> timestampedMeasures){
         return timestampedMeasures.stream()
                 .map(timestampedMeasure -> {
-                    SensorMeasureHistoryDao dao = new SensorMeasureHistoryDao();
+                    SensorMeasureHistorySecondsDao dao = new SensorMeasureHistorySecondsDao();
                     dao.setLocation(TEST_LOCATION); //Partition field
                     dao.setTimeBlockPeriodSeconds(TARGET_HISTORICAL_DATA_SIZING.getTimeBlockPeriodSeconds()); //Partition field
                     dao.setTimeBlockId(getHistoricalMeasureBlockId(timestampedMeasure.getFirst(), TARGET_HISTORICAL_DATA_SIZING)); //Partition field
                     dao.setMeasureType(TARGET_MEASURE_TYPE.name()); //Partition field
-                    dao.setAggregateType(TARGET_AGGREGATE_TYPE.name()); //Partition field
-                    dao.setBucket(SensorMeasureHistoryDao.SENSOR_MEASURE_DEFAULT_BUCKET_ID); //Partition field
+                    dao.setBucket(SensorMeasureHistorySecondsDao.SENSOR_MEASURE_DEFAULT_BUCKET_ID); //Partition field
                     dao.setTimestamp(Date.from(Instant.ofEpochMilli(timestampedMeasure.getFirst())));//Clustering field
                     dao.setValue(timestampedMeasure.getSecond());
                     return dao;

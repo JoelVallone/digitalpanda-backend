@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.LongStream;
 
@@ -28,15 +29,14 @@ public class SensorMeasureHistoryRepository {
 
     }
 
-    public List<SensorMeasureHistoryDao> saveAll(List<SensorMeasureHistoryDao> measuresToSave) {
+    public List<SensorMeasureHistorySecondsDao> saveAllSecondPrecisionMeasures(List<SensorMeasureHistorySecondsDao> measuresToSave) {
         return sensorMeasureHistoryRepoCRUD.saveAll(measuresToSave);
     }
 
 
-    public List<SensorMeasureHistoryDao> getMeasuresAtLocationWithInterval(
+    public List<SensorMeasureHistorySecondsDao> getMeasuresAtLocationWithInterval(
             String location,
             SensorMeasureType measureType,
-            AggregateType aggregateType,
             HistoricalDataStorageSizing targetHistoricalDataSizing,
             long intervalBeginMillisIncl,
             long intervalEndSecondsIncl) {
@@ -44,27 +44,30 @@ public class SensorMeasureHistoryRepository {
         long startBlockId = getHistoricalMeasureBlockId(intervalBeginMillisIncl, targetHistoricalDataSizing);
         long endBlockId = getHistoricalMeasureBlockId(intervalEndSecondsIncl, targetHistoricalDataSizing);
 
+        //Only second granularity measure data are available at the moment
+        if (targetHistoricalDataSizing.getAggregateIntervalSeconds() > 5L ) {
+            return Collections.emptyList();
+        }
+
         return LongStream.rangeClosed(startBlockId, endBlockId).boxed()
                 .map(blockId -> {
                         String cqlRangeSelect = String.format(
-                                "SELECT * FROM iot.sensor_measure_history WHERE " +
+                                "SELECT * FROM iot.sensor_measure_history_seconds WHERE " +
                                         "location = '%s' AND " +
                                         "time_block_period_seconds = %d AND " +
                                         "time_block_id = %d AND " +
                                         "measure_type = '%s' AND " +
-                                        "aggregate_type = '%s' AND " +
                                         "bucket = %d AND " +
                                         "timestamp >= %d AND timestamp <= %d",
                                 location,
                                 targetHistoricalDataSizing.getTimeBlockPeriodSeconds(),
                                 blockId,
                                 measureType.name(),
-                                aggregateType.name(),
-                                SensorMeasureHistoryDao.SENSOR_MEASURE_DEFAULT_BUCKET_ID,
+                                SensorMeasureHistorySecondsDao.SENSOR_MEASURE_DEFAULT_BUCKET_ID,
                                 intervalBeginMillisIncl,
                                 intervalEndSecondsIncl);
                         logger.debug(cqlRangeSelect);
-                        return cassandraTemplate.select(cqlRangeSelect, SensorMeasureHistoryDao.class);
+                        return cassandraTemplate.select(cqlRangeSelect, SensorMeasureHistorySecondsDao.class);
                     }
                 )
                 .flatMap(List::stream)
