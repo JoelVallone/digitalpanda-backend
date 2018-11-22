@@ -21,13 +21,12 @@ AND replication = { 'replication_factor' : 1, 'class' : 'SimpleStrategy' };
 */
     CREATE TABLE IF NOT EXISTS iot.sensor_measure_history_seconds (
         location text,
-        time_block_period_seconds bigint,
         time_block_id bigint,
         measure_type text,
         bucket int,
         timestamp timestamp,
         value double,
-        primary key((location, time_block_period_seconds, time_block_id, measure_type, bucket), timestamp)
+        primary key((location, time_block_id, measure_type, bucket), timestamp)
     ) WITH CLUSTERING ORDER BY (timestamp DESC)
               AND COMPACTION = {'class': 'TimeWindowCompactionStrategy',
                             'compaction_window_unit': 'DAYS',

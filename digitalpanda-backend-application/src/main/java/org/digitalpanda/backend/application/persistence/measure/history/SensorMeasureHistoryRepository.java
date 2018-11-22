@@ -54,13 +54,11 @@ public class SensorMeasureHistoryRepository {
                         String cqlRangeSelect = String.format(
                                 "SELECT * FROM iot.sensor_measure_history_seconds WHERE " +
                                         "location = '%s' AND " +
-                                        "time_block_period_seconds = %d AND " +
                                         "time_block_id = %d AND " +
                                         "measure_type = '%s' AND " +
                                         "bucket = %d AND " +
                                         "timestamp >= %d AND timestamp <= %d",
                                 location,
-                                targetHistoricalDataSizing.getTimeBlockPeriodSeconds(),
                                 blockId,
                                 measureType.name(),
                                 SensorMeasureHistorySecondsDao.SENSOR_MEASURE_DEFAULT_BUCKET_ID,

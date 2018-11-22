@@ -33,8 +33,6 @@ public class SensorMeasureUiController {
         return sensorMeasureLatestRepository.getKeys();
     }
 
-
-    //TODO: interface change on frontend side
     @CrossOrigin
     @RequestMapping(method = RequestMethod.GET)
     public SensorMeasureDTO getLatestMeasure(String location, String type) {

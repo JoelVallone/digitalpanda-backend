@@ -76,7 +76,6 @@ public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWith
                 .map(timestampedMeasure -> {
                     SensorMeasureHistorySecondsDao dao = new SensorMeasureHistorySecondsDao();
                     dao.setLocation(TEST_LOCATION); //Partition field
-                    dao.setTimeBlockPeriodSeconds(TARGET_HISTORICAL_DATA_SIZING.getTimeBlockPeriodSeconds()); //Partition field
                     dao.setTimeBlockId(getHistoricalMeasureBlockId(timestampedMeasure.getFirst(), TARGET_HISTORICAL_DATA_SIZING)); //Partition field
                     dao.setMeasureType(TARGET_MEASURE_TYPE.name()); //Partition field
                     dao.setBucket(SensorMeasureHistorySecondsDao.SENSOR_MEASURE_DEFAULT_BUCKET_ID); //Partition field

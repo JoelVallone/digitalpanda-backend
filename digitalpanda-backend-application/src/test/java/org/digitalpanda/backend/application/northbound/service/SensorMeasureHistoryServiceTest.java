@@ -182,7 +182,6 @@ public class SensorMeasureHistoryServiceTest {
                 .map(timeValuePair ->
                         new SensorMeasureHistorySecondsDao(
                                 TEST_LOCATION,
-                                DEFAULT_STORAGE_SIZING.getTimeBlockPeriodSeconds(),
                                 -1L,
                                 TEST_MEASURE_TYPE.name(),
                                 0,
