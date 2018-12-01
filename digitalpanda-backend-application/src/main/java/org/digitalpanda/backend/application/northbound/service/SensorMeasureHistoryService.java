@@ -5,6 +5,7 @@ import org.digitalpanda.backend.application.persistence.measure.history.SensorMe
 import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistoryRepository;
 import org.digitalpanda.backend.data.SensorMeasureType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
@@ -12,6 +13,7 @@ import static java.lang.Math.toIntExact;
 import static java.util.stream.Collectors.toList;
 import static org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistorySecondsDao.ROW_SIZE_BYTES;
 
+@Service
 public class SensorMeasureHistoryService {
 
     public static final double MAX_OUTPUT_MEASURES_JITTER = 1.2;

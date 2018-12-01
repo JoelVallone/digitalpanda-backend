@@ -2,6 +2,7 @@
 
 SCRIPT_FOLDER="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+pkill -f .*backend.*.jar || true
 mvn clean install
 
 if [ $# -gt 0 ] && [ $1 = "-c" ]; then
@@ -10,6 +11,5 @@ if [ $# -gt 0 ] && [ $1 = "-c" ]; then
     sleep 20
 fi
 
-pkill -f .*backend.*.jar || true
 java -jar "${SCRIPT_FOLDER}/../digitalpanda-backend-application/target/"*backend*.jar &> ${SCRIPT_FOLDER}/../backend.log &
 echo "Started backend with PID=$! logs available at: ${SCRIPT_FOLDER}/../backend.log"
