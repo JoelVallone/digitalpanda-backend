@@ -23,6 +23,54 @@ public class SensorMeasuresDTO {
         this.values = values;
     }
 
+    public Long getStartTimeMillisIncl() {
+        return startTimeMillisIncl;
+    }
+
+    public void setStartTimeMillisIncl(Long startTimeMillisIncl) {
+        this.startTimeMillisIncl = startTimeMillisIncl;
+    }
+
+    public Long getEndTimeMillisIncl() {
+        return endTimeMillisIncl;
+    }
+
+    public void setEndTimeMillisIncl(Long endTimeMillisIncl) {
+        this.endTimeMillisIncl = endTimeMillisIncl;
+    }
+
+    public Long getTimeMillisBetweenDataPoints() {
+        return timeMillisBetweenDataPoints;
+    }
+
+    public void setTimeMillisBetweenDataPoints(Long timeMillisBetweenDataPoints) {
+        this.timeMillisBetweenDataPoints = timeMillisBetweenDataPoints;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public List<Double> getValues() {
+        return values;
+    }
+
+    public void setValues(List<Double> values) {
+        this.values = values;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

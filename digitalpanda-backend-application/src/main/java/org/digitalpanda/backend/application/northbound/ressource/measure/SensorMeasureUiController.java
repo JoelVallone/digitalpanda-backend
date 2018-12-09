@@ -48,9 +48,9 @@ public class SensorMeasureUiController {
     @CrossOrigin
     @RequestMapping(method = RequestMethod.GET, path = "/history")
     public List<SensorMeasuresDTO> getMeasureInterval(String location, String type, Long startTimeMillisIncl, Long endTimeMillisExcl, Integer dataPointCount) {
-        if (startTimeMillisIncl < endTimeMillisExcl) {
+        if (startTimeMillisIncl >= endTimeMillisExcl) {
             throw new InvalidParameterException(
-                    String.format("startTimeMillisIncl(=%s) must be greater or equal to endTimeMillisExcl(=%s)",
+                    String.format("startTimeMillisIncl(=%s) must be lower than endTimeMillisExcl(=%s)",
                             startTimeMillisIncl, endTimeMillisExcl));
         }
 
