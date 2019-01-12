@@ -70,6 +70,7 @@ public class SensorMeasureLatestRepository {
 
     @Scheduled(fixedDelayString = "${digitalpanda.sensorMeasureLatestRepository.cacheRefreshRate.ms}")
     void updateCache(){
+        logger.debug("updateCache()");
         sensorMeasureLatestRepo
                 .findAll().stream()
                 .map(SensorMeasureDaoHelper::toSensorMeasure)

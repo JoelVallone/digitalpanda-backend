@@ -3,12 +3,12 @@ package org.digitalpanda.backend.application.config;
 import com.google.common.io.ByteStreams;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.cassandra.config.AbstractCassandraConfiguration;
 import org.springframework.data.cassandra.config.CassandraClusterFactoryBean;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,7 +18,6 @@ import static java.util.stream.Collectors.toList;
 
 @Configuration
 @EnableCassandraRepositories("org.digitalpanda.backend.application.persistence.measure")
-@PropertySource("classpath:application.properties")
 public class CassandraConfig extends AbstractCassandraConfiguration {
 
 
@@ -63,5 +62,18 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
     @Override
     protected int getPort() {
         return cassandraPort != null ? Integer.valueOf(cassandraPort) : CassandraClusterFactoryBean.DEFAULT_PORT;
+    }
+
+    @Value("${cassandra.contactpoints}")
+    String cassandraContactPoints;
+    @Override
+    protected String getContactPoints() {
+        return cassandraContactPoints != null ? cassandraContactPoints : CassandraClusterFactoryBean.DEFAULT_CONTACT_POINTS;
+    }
+
+    @PostConstruct
+    public void print() {
+        System.out.println("APP_KEYSPACE: " + APP_KEYSPACE);
+        System.out.println("cassandra.port: " + cassandraPort);
     }
 }
