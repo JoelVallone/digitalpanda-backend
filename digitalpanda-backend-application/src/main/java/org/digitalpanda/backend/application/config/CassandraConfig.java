@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.cassandra.config.AbstractCassandraConfiguration;
-import org.springframework.data.cassandra.config.CassandraClusterFactoryBean;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
 
 import javax.annotation.PostConstruct;
@@ -22,6 +21,8 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
 
 
     public static final String APP_KEYSPACE = "iot";
+    private static final int CASSANDRA_TEST_PORT = 9142;
+    private static final String CASSANDRA_TEST_CONTACT_POINT = "localhost";
 
     @Override
     protected String getKeyspaceName() {
@@ -34,12 +35,6 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
 
     @Override
     protected List<String> getStartupScripts(){
-        /*
-        String keyspace = "CREATE KEYSPACE IF NOT EXISTS " +  this.getKeyspaceName()
-                + " WITH durable_writes = true "
-                + " AND replication = { 'replication_factor' : 1, 'class' : 'SimpleStrategy' };";
-        return Collections.singletonList(keyspace);*/
-
         try {
             String initScript = new String(
                     ByteStreams.toByteArray(
@@ -58,10 +53,29 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
     }
 
     @Value("${cassandra.port}")
-    String cassandraPort;
+    private String cassandraPort;
     @Override
     protected int getPort() {
-        return cassandraPort != null ? Integer.valueOf(cassandraPort) : CassandraClusterFactoryBean.DEFAULT_PORT;
+        return isValidPropertyValue(cassandraPort) ?  Integer.valueOf(cassandraPort): CASSANDRA_TEST_PORT;
+    }
+
+    @Value("${cassandra.contactpoints}")
+    private String cassandraContactPoints;
+    @Override
+    protected String getContactPoints() {
+        return isValidPropertyValue(cassandraContactPoints) ? cassandraContactPoints : CASSANDRA_TEST_CONTACT_POINT;
+    }
+
+    private boolean isValidPropertyValue(Object value){
+        return value != null && !value.toString().contains("${");
+    }
+
+    @PostConstruct
+    public void print() {
+        System.out.println("CassandraConfig: ");
+        System.out.println("-> APP_KEYSPACE: " + APP_KEYSPACE);
+        System.out.println("-> cassandra.port: " + getPort());
+        System.out.println("-> cassandra.contactpoints: " + getContactPoints());
     }
 
     @Value("${cassandra.contactpoints}")

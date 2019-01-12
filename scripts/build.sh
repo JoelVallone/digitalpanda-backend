@@ -6,7 +6,6 @@ JAR_OUTPUT_FOLDER="${SCRIPTS_FOLDER}/../../digitalpanda-infrastructure/docker/im
 
 echo "=> Build backend"
 cd ${SCRIPTS_FOLDER}/../
-export spring.env=local
 mvn clean install
 
 echo "=> Copy backend binary to docker image external folder"
@@ -15,5 +14,5 @@ cp "${SCRIPTS_FOLDER}/../digitalpanda-backend-application/target/"*backend*.jar 
 
 echo "=>Build and push image to registry"
 IMAGE_NAME=localhost:5000/digitalpanda-backend:latest
-docker build -t ${IMAGE_NAME} ${SCRIPT_FOLDER}/../
+docker build -t ${IMAGE_NAME} ${SCRIPTS_FOLDER}/../
 docker push ${IMAGE_NAME}
