@@ -77,17 +77,4 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
         System.out.println("-> cassandra.port: " + getPort());
         System.out.println("-> cassandra.contactpoints: " + getContactPoints());
     }
-
-    @Value("${cassandra.contactpoints}")
-    String cassandraContactPoints;
-    @Override
-    protected String getContactPoints() {
-        return cassandraContactPoints != null ? cassandraContactPoints : CassandraClusterFactoryBean.DEFAULT_CONTACT_POINTS;
-    }
-
-    @PostConstruct
-    public void print() {
-        System.out.println("APP_KEYSPACE: " + APP_KEYSPACE);
-        System.out.println("cassandra.port: " + cassandraPort);
-    }
 }
