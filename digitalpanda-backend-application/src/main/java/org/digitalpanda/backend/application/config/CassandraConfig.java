@@ -21,7 +21,6 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
 
 
     public static final String APP_KEYSPACE = "iot";
-    private static final int CASSANDRA_TEST_PORT = 9142;
     private static final String CASSANDRA_TEST_CONTACT_POINT = "localhost";
 
     @Override
@@ -56,7 +55,7 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
     private String cassandraPort;
     @Override
     protected int getPort() {
-        return isValidPropertyValue(cassandraPort) ?  Integer.valueOf(cassandraPort): CASSANDRA_TEST_PORT;
+        return isValidPropertyValue(cassandraPort) ?  Integer.valueOf(cassandraPort): super.getPort();
     }
 
     @Value("${cassandra.contactpoints}")

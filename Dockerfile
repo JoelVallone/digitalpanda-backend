@@ -15,5 +15,5 @@ WORKDIR ${BASE_DIR}
 COPY --chown=100:100 digitalpanda-backend-application/target/backend.application*.jar ${BIN_DIR}/backend.jar
 
 USER ${USER_ID}:${GROUP_ID}
-EXPOSE 8080
+EXPOSE 8081
 CMD java -jar -Dspring.profiles.active=container.${TARGET_ENV} ${BIN_DIR}/backend.jar

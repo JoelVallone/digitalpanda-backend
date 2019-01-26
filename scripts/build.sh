@@ -13,6 +13,8 @@ rm -f "${JAR_OUTPUT_FOLDER}/"*backend*.jar
 cp "${SCRIPTS_FOLDER}/../digitalpanda-backend-application/target/"*backend*.jar "${JAR_OUTPUT_FOLDER}/"
 
 echo "=>Build and push image to registry"
-IMAGE_NAME=localhost:5000/digitalpanda-backend:latest
+VERSION="1.0.0"
+REGISTRY="localhost:5000"
+IMAGE_NAME=${REGISTRY}/digitalpanda-backend:${VERSION}
 docker build -t ${IMAGE_NAME} ${SCRIPTS_FOLDER}/../
 docker push ${IMAGE_NAME}
