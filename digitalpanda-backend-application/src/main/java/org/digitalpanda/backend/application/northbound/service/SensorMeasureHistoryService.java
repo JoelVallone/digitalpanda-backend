@@ -3,18 +3,29 @@ package org.digitalpanda.backend.application.northbound.service;
 import org.digitalpanda.backend.application.persistence.measure.history.HistoricalDataStorageSizing;
 import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistorySecondsDao;
 import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistoryRepository;
+import org.digitalpanda.backend.data.SensorMeasure;
+import org.digitalpanda.backend.data.SensorMeasureMetaData;
 import org.digitalpanda.backend.data.SensorMeasureType;
+import org.digitalpanda.backend.data.SensorMeasures;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.lang.Math.toIntExact;
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
+import static org.digitalpanda.backend.application.persistence.measure.SensorMeasureDaoHelper.getHistoricalMeasureBlockId;
 import static org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistorySecondsDao.ROW_SIZE_BYTES;
 
 @Service
 public class SensorMeasureHistoryService {
+
+    private Logger logger = LoggerFactory.getLogger(SensorMeasureHistoryService.class);
 
     public static final double MAX_OUTPUT_MEASURES_JITTER = 1.2;
     public static final int MAX_ROW_COUNT = 55*1000*1000 / ROW_SIZE_BYTES; //~55 MiB of data ~= 581'395 data points with second period ~= 7.4 days sample size !
@@ -24,6 +35,37 @@ public class SensorMeasureHistoryService {
     @Autowired
     public SensorMeasureHistoryService(SensorMeasureHistoryRepository sensorMeasureHistoryRepository) {
         this.sensorMeasureHistoryRepository = sensorMeasureHistoryRepository;
+    }
+
+    public void saveAllSecondPrecisionMeasures(List<SensorMeasures> sensorMeasuresList){
+        sensorMeasureHistoryRepository.saveAllSecondPrecisionMeasures(
+                sensorMeasuresList.stream()
+                .map(this::toSensorMeasuresSecondDao)
+                .flatMap(List::stream)
+                .collect(Collectors.toList())
+        );
+    }
+
+    private List<SensorMeasureHistorySecondsDao> toSensorMeasuresSecondDao(SensorMeasures sensorMeasures){
+        SensorMeasureMetaData sensorMeasureMetaData = sensorMeasures.getSensorMeasureMetaData();
+        if(sensorMeasureMetaData == null ||
+                sensorMeasureMetaData.getType() == null ||
+                sensorMeasureMetaData.getLocation() == null ||
+                sensorMeasureMetaData.getLocation().isEmpty() ||
+                sensorMeasures.getMeasures() == null ){
+            logger.warn("Malformed sensor measures: " + sensorMeasures.getSensorMeasureMetaData());
+            return emptyList();
+        }
+        return sensorMeasures.getMeasures().stream().map(sensorMeasure -> {
+            SensorMeasureHistorySecondsDao dao = new SensorMeasureHistorySecondsDao();
+            dao.setLocation(sensorMeasureMetaData.getLocation()); //Partition field
+            dao.setTimeBlockId(getHistoricalMeasureBlockId(sensorMeasure.getTimestamp(), HistoricalDataStorageSizing.SECOND_PRECISION_RAW)); //Partition field
+            dao.setMeasureType(sensorMeasureMetaData.getType().name()); //Partition field
+            dao.setBucket(SensorMeasureHistorySecondsDao.SENSOR_MEASURE_DEFAULT_BUCKET_ID); //Partition field
+            dao.setTimestamp(Date.from(Instant.ofEpochMilli(sensorMeasure.getTimestamp())));//Clustering field
+            dao.setValue(sensorMeasure.getValue());
+            return dao;
+        }).collect(Collectors.toList());
     }
 
     public List<SensorMeasuresEquidistributed> getMeasuresWithContinuousEquidistributedSubIntervals(
@@ -41,7 +83,7 @@ public class SensorMeasureHistoryService {
 
     private List<SensorMeasuresEquidistributed> resizeSample(long startTimeMillisIncl, long endTimeMillisExcl, int targetDataPointCount, List<SensorMeasureHistorySecondsDao> storedMeasuresTimeIncreasing, HistoricalDataStorageSizing historicalDataStorageSizing) {
         if(storedMeasuresTimeIncreasing.size() == 0)
-            return Collections.emptyList();
+            return emptyList();
 
         final long targetPeriodMillis = (endTimeMillisExcl - startTimeMillisIncl) / targetDataPointCount;
         if (targetPeriodMillis < 1000)

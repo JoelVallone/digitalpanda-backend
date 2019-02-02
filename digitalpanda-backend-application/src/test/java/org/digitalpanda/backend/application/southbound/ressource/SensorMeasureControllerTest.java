@@ -1,5 +1,6 @@
 package org.digitalpanda.backend.application.southbound.ressource;
 
+import org.digitalpanda.backend.application.northbound.service.SensorMeasureHistoryService;
 import org.digitalpanda.backend.application.persistence.measure.latest.SensorMeasureLatestRepository;
 import org.digitalpanda.backend.application.southbound.ressource.measure.SensorMeasureController;
 import org.digitalpanda.backend.data.SensorMeasure;
@@ -25,11 +26,13 @@ public class SensorMeasureControllerTest {
 
     @Mock
     private SensorMeasureLatestRepository sensorMeasureLatestRepositoryMock;
+    @Mock
+    private SensorMeasureHistoryService sensorMeasureHistoryService;
     private SensorMeasureController sensorMeasureController;
 
     @Before
     public void init() {
-        this.sensorMeasureController = new SensorMeasureController(sensorMeasureLatestRepositoryMock);
+        this.sensorMeasureController = new SensorMeasureController(sensorMeasureLatestRepositoryMock, sensorMeasureHistoryService);
     }
 
     @Test

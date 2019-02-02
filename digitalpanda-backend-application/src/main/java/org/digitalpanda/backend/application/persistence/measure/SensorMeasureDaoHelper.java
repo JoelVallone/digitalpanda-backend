@@ -25,7 +25,7 @@ public class SensorMeasureDaoHelper {
 
         dao.setTimestamp(sampleDate);
 
-        dao.setMeasureType(measureKey.getType().getUnit());
+        dao.setMeasureType(measureKey.getType().name());
         dao.setValue(sensorMeasure.getValue());
 
         return dao;
