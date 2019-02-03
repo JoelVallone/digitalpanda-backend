@@ -72,13 +72,23 @@ public class SensorMeasureHistoryService {
             String location, SensorMeasureType sensorMeasureType, long startTimeMillisIncl, long endTimeMillisExcl, int dataPointCount) {
         HistoricalDataStorageSizing storageSizingWithNearestLowerPeriod = findHistoricalDataStorageSizingWithNearestLowerPeriod(startTimeMillisIncl, endTimeMillisExcl, dataPointCount);
 
+        long start = System.currentTimeMillis();
         long trimmedEndTimeMillisIncl = endTimeMillisExcl;
         if((endTimeMillisExcl - startTimeMillisIncl) / (storageSizingWithNearestLowerPeriod.getTimeBlockPeriodSeconds()*1000)  > MAX_ROW_COUNT) {
             trimmedEndTimeMillisIncl = startTimeMillisIncl + (storageSizingWithNearestLowerPeriod.getTimeBlockPeriodSeconds() * 1000 * MAX_ROW_COUNT);
         }
         List<SensorMeasureHistorySecondsDao> storageValuesTimeIncreasing = loadMeasuresIncreasingOrder(location, sensorMeasureType, startTimeMillisIncl, trimmedEndTimeMillisIncl, storageSizingWithNearestLowerPeriod);
-
-        return resizeSample(startTimeMillisIncl, endTimeMillisExcl, dataPointCount, storageValuesTimeIncreasing, storageSizingWithNearestLowerPeriod);
+        long dbLoaded = System.currentTimeMillis();
+        List<SensorMeasuresEquidistributed> resizedSample = resizeSample(startTimeMillisIncl, endTimeMillisExcl, dataPointCount, storageValuesTimeIncreasing, storageSizingWithNearestLowerPeriod);
+        long sampleResized = System.currentTimeMillis();
+        logger.info("Execution time breakdown:"
+                        + "\n> Total execution time: " + (sampleResized - start) + " Millis"
+                        + "\n -> db load time: " + (dbLoaded - start) + " Millis"
+                        + "\n --> row count: " + storageValuesTimeIncreasing.size()
+                        + "\n -> sample resizing: " + (sampleResized - dbLoaded) + " Millis"
+                        + "\n --> Covered sample interval: " + (endTimeMillisExcl - startTimeMillisIncl) + " Millis"
+        );
+        return resizedSample;
     }
 
     private List<SensorMeasuresEquidistributed> resizeSample(long startTimeMillisIncl, long endTimeMillisExcl, int targetDataPointCount, List<SensorMeasureHistorySecondsDao> storedMeasuresTimeIncreasing, HistoricalDataStorageSizing historicalDataStorageSizing) {

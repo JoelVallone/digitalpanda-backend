@@ -28,7 +28,6 @@ public class SensorMeasureController {
     @CrossOrigin
     @RequestMapping(method= RequestMethod.POST)
     public void setLatestMeasure(@RequestBody List<SensorMeasures> sensorMeasuresList){
-        System.out.println("/sensor POST: " + sensorMeasuresList.stream().map(SensorMeasures::toString).collect(Collectors.joining(",")));
         sensorMeasuresList.forEach(
                 (sensorMeasures) ->
                     sensorMeasureLatestRepository.setMeasure(
