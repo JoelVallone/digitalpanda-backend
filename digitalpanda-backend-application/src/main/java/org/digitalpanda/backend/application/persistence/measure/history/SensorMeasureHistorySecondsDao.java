@@ -12,7 +12,6 @@ import java.util.Objects;
 public class SensorMeasureHistorySecondsDao {
 
     public static final String SENSOR_MEASURE_HISTORY_TABLE_NAME = "sensor_measure_history_seconds";
-    public static final int SENSOR_MEASURE_DEFAULT_BUCKET_ID = 0;
     public static final int ROW_SIZE_BYTES = 86;
 
     @PrimaryKeyColumn(name = "location", ordinal = 0, type = PrimaryKeyType.PARTITIONED)

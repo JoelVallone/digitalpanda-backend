@@ -1,6 +1,5 @@
 package org.digitalpanda.backend.application.persistence.measure;
 
-import org.digitalpanda.backend.application.persistence.measure.history.HistoricalDataStorageSizing;
 import org.digitalpanda.backend.application.persistence.measure.latest.SensorMeasureLatestDao;
 import org.digitalpanda.backend.application.util.Pair;
 import org.digitalpanda.backend.data.SensorMeasure;
@@ -54,9 +53,5 @@ public class SensorMeasureDaoHelper {
 
     public static Date toDate(long timeMillisSinceEpoch){
         return Date.from(Instant.ofEpochMilli(timeMillisSinceEpoch));
-    }
-
-    public static long getHistoricalMeasureBlockId(long targetTimeMillis, HistoricalDataStorageSizing targetHistoricalData) {
-        return targetTimeMillis / 1000L / targetHistoricalData.getTimeBlockPeriodSeconds();
     }
 }

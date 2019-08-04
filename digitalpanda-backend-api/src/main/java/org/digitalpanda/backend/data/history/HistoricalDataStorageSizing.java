@@ -1,4 +1,4 @@
-package org.digitalpanda.backend.application.persistence.measure.history;
+package org.digitalpanda.backend.data.history;
 
 /*
 Web user : < 200 ms responsiveness

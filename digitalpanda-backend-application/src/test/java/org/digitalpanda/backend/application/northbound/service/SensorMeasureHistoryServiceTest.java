@@ -1,6 +1,6 @@
 package org.digitalpanda.backend.application.northbound.service;
 
-import org.digitalpanda.backend.application.persistence.measure.history.HistoricalDataStorageSizing;
+import org.digitalpanda.backend.data.history.HistoricalDataStorageSizing;
 import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistoryRepository;
 import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistorySecondsDao;
 import org.digitalpanda.backend.application.util.Pair;

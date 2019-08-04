@@ -3,6 +3,7 @@ package org.digitalpanda.backend.application.persistence.measure.history;
 import org.digitalpanda.backend.application.persistence.CassandraWithSpringBaseTest;
 import org.digitalpanda.backend.application.persistence.measure.latest.SensorMeasureLatestDao;
 import org.digitalpanda.backend.application.util.Pair;
+import org.digitalpanda.backend.data.history.HistoricalDataStorageSizing;
 import org.digitalpanda.backend.data.SensorMeasureType;
 import org.junit.After;
 import org.junit.Before;
@@ -16,7 +17,8 @@ import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 import static junit.framework.TestCase.assertEquals;
-import static org.digitalpanda.backend.application.persistence.measure.SensorMeasureDaoHelper.getHistoricalMeasureBlockId;
+import static org.digitalpanda.backend.data.history.HistoricalDataStorageHelper.SENSOR_MEASURE_DEFAULT_BUCKET_ID;
+import static org.digitalpanda.backend.data.history.HistoricalDataStorageHelper.getHistoricalMeasureBlockId;
 
 public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWithSpringBaseTest {
 
@@ -78,7 +80,7 @@ public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWith
                     dao.setLocation(TEST_LOCATION); //Partition field
                     dao.setTimeBlockId(getHistoricalMeasureBlockId(timestampedMeasure.getFirst(), TARGET_HISTORICAL_DATA_SIZING)); //Partition field
                     dao.setMeasureType(TARGET_MEASURE_TYPE.name()); //Partition field
-                    dao.setBucket(SensorMeasureHistorySecondsDao.SENSOR_MEASURE_DEFAULT_BUCKET_ID); //Partition field
+                    dao.setBucket(SENSOR_MEASURE_DEFAULT_BUCKET_ID); //Partition field
                     dao.setTimestamp(Date.from(Instant.ofEpochMilli(timestampedMeasure.getFirst())));//Clustering field
                     dao.setValue(timestampedMeasure.getSecond());
                     return dao;

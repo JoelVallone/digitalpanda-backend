@@ -1,9 +1,8 @@
 package org.digitalpanda.backend.application.northbound.service;
 
-import org.digitalpanda.backend.application.persistence.measure.history.HistoricalDataStorageSizing;
+import org.digitalpanda.backend.data.history.HistoricalDataStorageSizing;
 import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistorySecondsDao;
 import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistoryRepository;
-import org.digitalpanda.backend.data.SensorMeasure;
 import org.digitalpanda.backend.data.SensorMeasureMetaData;
 import org.digitalpanda.backend.data.SensorMeasureType;
 import org.digitalpanda.backend.data.SensorMeasures;
@@ -19,8 +18,9 @@ import java.util.stream.Collectors;
 import static java.lang.Math.toIntExact;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
-import static org.digitalpanda.backend.application.persistence.measure.SensorMeasureDaoHelper.getHistoricalMeasureBlockId;
 import static org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistorySecondsDao.ROW_SIZE_BYTES;
+import static org.digitalpanda.backend.data.history.HistoricalDataStorageHelper.SENSOR_MEASURE_DEFAULT_BUCKET_ID;
+import static org.digitalpanda.backend.data.history.HistoricalDataStorageHelper.getHistoricalMeasureBlockId;
 
 @Service
 public class SensorMeasureHistoryService {
@@ -61,7 +61,7 @@ public class SensorMeasureHistoryService {
             dao.setLocation(sensorMeasureMetaData.getLocation()); //Partition field
             dao.setTimeBlockId(getHistoricalMeasureBlockId(sensorMeasure.getTimestamp(), HistoricalDataStorageSizing.SECOND_PRECISION_RAW)); //Partition field
             dao.setMeasureType(sensorMeasureMetaData.getType().name()); //Partition field
-            dao.setBucket(SensorMeasureHistorySecondsDao.SENSOR_MEASURE_DEFAULT_BUCKET_ID); //Partition field
+            dao.setBucket(SENSOR_MEASURE_DEFAULT_BUCKET_ID); //Partition field
             dao.setTimestamp(Date.from(Instant.ofEpochMilli(sensorMeasure.getTimestamp())));//Clustering field
             dao.setValue(sensorMeasure.getValue());
             return dao;
