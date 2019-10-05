@@ -16,6 +16,15 @@ public class HistoricalDataStorageHelper {
         return targetTimeMillis / 1000L / targetHistoricalData.getTimeBlockPeriodSeconds();
     }
 
+    public static String cqlTableOf(HistoricalDataStorageSizing sizing) {
+        switch (sizing) {
+            case SECOND_PRECISION_RAW:
+                return "sensor_measure_history_seconds";
+            default:
+                return "sensor_measure_history_seconds_" + sizing.getTimeBlockPeriodSeconds();
+        }
+    }
+
     public static List<String> getRangeSelectionCqlQueries(
             String location,
             SensorMeasureType measureType,

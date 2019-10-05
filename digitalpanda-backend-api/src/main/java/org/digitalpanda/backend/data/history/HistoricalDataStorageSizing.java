@@ -1,5 +1,10 @@
 package org.digitalpanda.backend.data.history;
 
+import java.util.Arrays;
+import java.util.List;
+
+import static java.util.Arrays.asList;
+
 /*
 Web user : < 200 ms responsiveness
     -> api call :   metadata = (start millis (9 Bytes), end millis (9 Bytes), aggregate type (20 Bytes), aggregate interval millis (9 Bytes), measure type (20 Bytes));
@@ -16,8 +21,11 @@ Cassandra: Maximum partition size : 50 MiB,
     => 500 k records
 */
 public enum HistoricalDataStorageSizing {
-    SECOND_PRECISION_RAW(1L, AggregateType.VALUE); //Raw data provided by sensor network
-    //MINUTE_PRECISION_AGGREGATE(60L, AggregateType.AVG); //TODO: Possible DB-stored output of batch processing aggregate on sensor network raw data
+    //Ordered by increasing aggregate interval.
+    SECOND_PRECISION_RAW(1L, AggregateType.VALUE), //Raw data provided by sensor network
+    MINUTE_PRECISION_AVG(60L, AggregateType.AVERAGE),
+    HOUR_PRECISION_AVG(3600L, AggregateType.AVERAGE),
+    DAY_PRECISION_AVG(24*3600L, AggregateType.AVERAGE);
 
     public static final long MAX_TABLE_PARTITION_SIZE_BYTES = 50 * (1L << 20);
     public static final long MEASURE_HISTORY_ROW_SIZE_BYTES = 100L;
