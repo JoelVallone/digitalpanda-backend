@@ -8,7 +8,6 @@ import org.digitalpanda.backend.data.SensorMeasure;
 import org.digitalpanda.backend.data.SensorMeasureMetaData;
 import org.digitalpanda.backend.data.SensorMeasureType;
 import org.digitalpanda.backend.data.SensorMeasures;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -21,6 +20,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static junit.framework.TestCase.assertEquals;
 import static org.assertj.core.util.Lists.emptyList;
+import static org.digitalpanda.backend.data.history.HistoricalDataStorageSizing.*;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.when;
 
@@ -29,21 +29,61 @@ public class SensorMeasureHistoryServiceTest {
 
     private static final String TEST_LOCATION = "testLocation";
     private static final SensorMeasureType TEST_MEASURE_TYPE = SensorMeasureType.TEMPERATURE;
-    private static final HistoricalDataStorageSizing DEFAULT_STORAGE_SIZING = HistoricalDataStorageSizing.SECOND_PRECISION_RAW;
+    private static final HistoricalDataStorageSizing DEFAULT_STORAGE_SIZING = SECOND_PRECISION_RAW;
     private static final long REF_EPOCH_MILLIS = 1540714000000L;
 
     @Mock
     private SensorMeasureHistoryRepository sensorMeasureHistoryRepositoryMock;
     private SensorMeasureHistoryService sensorMeasureHistoryService;
 
-    @Before
-    public void init() {
-         this.sensorMeasureHistoryService = new SensorMeasureHistoryService(sensorMeasureHistoryRepositoryMock);
+    public void init(boolean allowAggregate) {
+         this.sensorMeasureHistoryService = new SensorMeasureHistoryService(sensorMeasureHistoryRepositoryMock, allowAggregate);
+    }
+
+    @Test
+    public void nearestLowestPeriod_shouldFindNearest(){
+        //Given
+        init(true);
+        long beginEpochSec = 10_000_000L;
+        long endEpochSec = beginEpochSec + 604_800L;
+        int secondResDataPoints = 604_800 - 100;
+        int minuteResDataPoints = secondResDataPoints / 60;
+        int hourResDataPoints = minuteResDataPoints / 60;
+        int dayResDataPoints = hourResDataPoints / 24;
+
+        //When, Then
+        assertSizing(SECOND_PRECISION_RAW, beginEpochSec, endEpochSec, secondResDataPoints);
+        assertSizing(MINUTE_PRECISION_AVG, beginEpochSec, endEpochSec, minuteResDataPoints);
+        assertSizing(MINUTE_PRECISION_AVG, beginEpochSec, endEpochSec, hourResDataPoints << 1);
+        assertSizing(HOUR_PRECISION_AVG, beginEpochSec, endEpochSec, hourResDataPoints);
+        assertSizing(DAY_PRECISION_AVG, beginEpochSec, endEpochSec, dayResDataPoints);
+    }
+
+    void assertSizing(HistoricalDataStorageSizing precision, long beginSec, long endSec, int points) {
+        assertEquals(precision,
+                sensorMeasureHistoryService.sizingWithLowestFittingPeriod(beginSec, endSec, points));
+    }
+
+    @Test
+    public void nearestLowestPeriod_shouldDefaultToSeconds() {
+        //Given, When, Then
+        init(true);
+        assertDefaultSizing(0, 0);
+        assertDefaultSizing(1, -1);
+        assertDefaultSizing(-1, 1);
+        assertDefaultSizing(0, -1);
+        assertDefaultSizing(-1, 0);
+    }
+
+    void assertDefaultSizing(long intervalSize, int dataPoints) {
+        assertEquals(SECOND_PRECISION_RAW,
+                sensorMeasureHistoryService.sizingWithLowestFittingPeriod(0, intervalSize, dataPoints));
     }
 
     @Test
     public void saveAllSecondPrecisionMeasures_shouldMapToDaoAndCallRepository() {
         //Given
+        init(false);
         List<SensorMeasures> sensorMeasuresList = new ArrayList<>();
         sensorMeasuresList.add(new SensorMeasures(
                 new SensorMeasureMetaData("server-room", SensorMeasureType.PRESSURE),
@@ -87,6 +127,7 @@ public class SensorMeasureHistoryServiceTest {
     public void saveAllSecondPrecisionMeasures_shouldNotFailAndIgnoreButNotifyMalformedValue() {
 
         //Given
+        init(false);
         List<SensorMeasures> sensorMeasuresList = new ArrayList<>();
         sensorMeasuresList.add(new SensorMeasures(
                 new SensorMeasureMetaData("outdoor", SensorMeasureType.TEMPERATURE),
@@ -128,6 +169,7 @@ public class SensorMeasureHistoryServiceTest {
     @Test
     public void getMeasuresAtLocationWithInterval_shouldReturnOneContinuousSubInterval_whenFullDataPoints() {
         //Given
+        init(false);
         int expectedDataPointCount = 2;
         long targetPeriodMillis = 3000L;
         long intervalStartMillisIncl = REF_EPOCH_MILLIS;
@@ -160,6 +202,7 @@ public class SensorMeasureHistoryServiceTest {
     @Test
     public void getMeasuresAtLocationWithInterval_shouldReturnOneContinuousSubIntervalWithOffset_whenSingleDataPoint() {
         //Given
+        init(false);
         int expectedDataPointCount = 30;
         long targetPeriodMillis = 3000L;
         long intervalStartMillisIncl = REF_EPOCH_MILLIS;
@@ -192,6 +235,7 @@ public class SensorMeasureHistoryServiceTest {
     @Test
     public void getMeasuresAtLocationWithInterval_shouldReturnTwoContinuousSubIntervalsWithOffset_whenMultipleDataPoints() {
         //Given
+        init(false);
         int expectedDataPointCount = 30;
         long targetPeriodMillis = 3000L;
         long subIntervalShift = 5000L + (long) (targetPeriodMillis * SensorMeasureHistoryService.MAX_OUTPUT_MEASURES_JITTER);
@@ -232,6 +276,7 @@ public class SensorMeasureHistoryServiceTest {
     @Test
     public void getMeasuresAtLocationWithInterval_shouldReturnAnEmptyList_WhenNoDataPoint() {
         //Given
+        init(false);
         int expectedDataPointCount = 2;
         long targetPeriodMillis = 3000L;
         long intervalStartMillisIncl = REF_EPOCH_MILLIS;

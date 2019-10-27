@@ -20,8 +20,6 @@ import static junit.framework.TestCase.assertEquals;
 import static org.digitalpanda.backend.data.history.HistoricalDataStorageHelper.SENSOR_MEASURE_DEFAULT_BUCKET_ID;
 import static org.digitalpanda.backend.data.history.HistoricalDataStorageHelper.getHistoricalMeasureBlockId;
 
-//TODO:  Upgrade to JDK 11 and fix embedded cassandra errors
-// forced openjdk8: export JAVA_HOME='/usr/lib/jvm/java-8-openjdk-amd64' && mvn clean test
 public class SensorMeasureHistoryRepositoryIntegrationTest extends CassandraWithSpringBaseTest {
 
     private static final SensorMeasureType TARGET_MEASURE_TYPE = SensorMeasureType.TEMPERATURE;

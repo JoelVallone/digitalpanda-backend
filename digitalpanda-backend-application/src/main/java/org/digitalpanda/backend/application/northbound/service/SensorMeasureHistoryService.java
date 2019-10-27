@@ -9,6 +9,7 @@ import org.digitalpanda.backend.data.SensorMeasures;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -21,10 +22,12 @@ import static java.util.stream.Collectors.toList;
 import static org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistorySecondsDao.ROW_SIZE_BYTES;
 import static org.digitalpanda.backend.data.history.HistoricalDataStorageHelper.SENSOR_MEASURE_DEFAULT_BUCKET_ID;
 import static org.digitalpanda.backend.data.history.HistoricalDataStorageHelper.getHistoricalMeasureBlockId;
+import static org.digitalpanda.backend.data.history.HistoricalDataStorageSizing.SECOND_PRECISION_RAW;
 
 @Service
 public class SensorMeasureHistoryService {
 
+    private boolean allowAggregates;
     private Logger logger = LoggerFactory.getLogger(SensorMeasureHistoryService.class);
 
     public static final double MAX_OUTPUT_MEASURES_JITTER = 1.2;
@@ -33,8 +36,11 @@ public class SensorMeasureHistoryService {
     private SensorMeasureHistoryRepository sensorMeasureHistoryRepository;
 
     @Autowired
-    public SensorMeasureHistoryService(SensorMeasureHistoryRepository sensorMeasureHistoryRepository) {
+    public SensorMeasureHistoryService(
+            SensorMeasureHistoryRepository sensorMeasureHistoryRepository,
+            @Value("${digitalpanda.sensor.allowAggregates}") boolean allowAggregates) {
         this.sensorMeasureHistoryRepository = sensorMeasureHistoryRepository;
+        this.allowAggregates = allowAggregates;
     }
 
     public void saveAllSecondPrecisionMeasures(List<SensorMeasures> sensorMeasuresList){
@@ -59,7 +65,7 @@ public class SensorMeasureHistoryService {
         return sensorMeasures.getMeasures().stream().map(sensorMeasure -> {
             SensorMeasureHistorySecondsDao dao = new SensorMeasureHistorySecondsDao();
             dao.setLocation(sensorMeasureMetaData.getLocation()); //Partition field
-            dao.setTimeBlockId(getHistoricalMeasureBlockId(sensorMeasure.getTimestamp(), HistoricalDataStorageSizing.SECOND_PRECISION_RAW)); //Partition field
+            dao.setTimeBlockId(getHistoricalMeasureBlockId(sensorMeasure.getTimestamp(), SECOND_PRECISION_RAW)); //Partition field
             dao.setMeasureType(sensorMeasureMetaData.getType().name()); //Partition field
             dao.setBucket(SENSOR_MEASURE_DEFAULT_BUCKET_ID); //Partition field
             dao.setTimestamp(Date.from(Instant.ofEpochMilli(sensorMeasure.getTimestamp())));//Clustering field
@@ -70,16 +76,16 @@ public class SensorMeasureHistoryService {
 
     public List<SensorMeasuresEquidistributed> getMeasuresWithContinuousEquidistributedSubIntervals(
             String location, SensorMeasureType sensorMeasureType, long startTimeMillisIncl, long endTimeMillisExcl, int dataPointCount) {
-        HistoricalDataStorageSizing storageSizingWithNearestLowerPeriod = findHistoricalDataStorageSizingWithNearestLowerPeriod(startTimeMillisIncl, endTimeMillisExcl, dataPointCount);
+        HistoricalDataStorageSizing storageSizing = allowAggregates ? sizingWithLowestFittingPeriod(startTimeMillisIncl, endTimeMillisExcl, dataPointCount) : SECOND_PRECISION_RAW;
 
         long start = System.currentTimeMillis();
         long trimmedEndTimeMillisIncl = endTimeMillisExcl;
-        if((endTimeMillisExcl - startTimeMillisIncl) / (storageSizingWithNearestLowerPeriod.getTimeBlockPeriodSeconds()*1000)  > MAX_ROW_COUNT) {
-            trimmedEndTimeMillisIncl = startTimeMillisIncl + (storageSizingWithNearestLowerPeriod.getTimeBlockPeriodSeconds() * 1000 * MAX_ROW_COUNT);
+        if((endTimeMillisExcl - startTimeMillisIncl) / (storageSizing.getTimeBlockPeriodSeconds()*1000)  > MAX_ROW_COUNT) {
+            trimmedEndTimeMillisIncl = startTimeMillisIncl + (storageSizing.getTimeBlockPeriodSeconds() * 1000 * MAX_ROW_COUNT);
         }
-        List<SensorMeasureHistorySecondsDao> storageValuesTimeIncreasing = loadMeasuresIncreasingOrder(location, sensorMeasureType, startTimeMillisIncl, trimmedEndTimeMillisIncl, storageSizingWithNearestLowerPeriod);
+        List<SensorMeasureHistorySecondsDao> storageValuesTimeIncreasing = loadMeasuresIncreasingOrder(location, sensorMeasureType, startTimeMillisIncl, trimmedEndTimeMillisIncl, storageSizing);
         long dbLoaded = System.currentTimeMillis();
-        List<SensorMeasuresEquidistributed> resizedSample = resizeSample(startTimeMillisIncl, endTimeMillisExcl, dataPointCount, storageValuesTimeIncreasing, storageSizingWithNearestLowerPeriod);
+        List<SensorMeasuresEquidistributed> resizedSample = resizeSample(startTimeMillisIncl, endTimeMillisExcl, dataPointCount, storageValuesTimeIncreasing, storageSizing);
         long sampleResized = System.currentTimeMillis();
         logger.info("Execution time breakdown:"
                         + "\n> Total execution time: " + (sampleResized - start) + " Millis"
@@ -169,9 +175,22 @@ public class SensorMeasureHistoryService {
         return new SensorMeasuresEquidistributed(startTimeMillisIncl, startTimeMillisIncl + resizedSample.size() * targetPeriodMillis, targetPeriodMillis, resizedSample);
     }
 
-    private HistoricalDataStorageSizing findHistoricalDataStorageSizingWithNearestLowerPeriod(long intervalBeginSecondsIncl, long intervalEndSecondsIncl, int dataPointCount) {
-        //TODO: Refine computation once multiple HistoricalDataStorageSizing are available
-        return HistoricalDataStorageSizing.SECOND_PRECISION_RAW;
+    HistoricalDataStorageSizing sizingWithLowestFittingPeriod(long intervalBeginSecondsIncl, long intervalEndSecondsIncl, int dataPointCount) {
+        HistoricalDataStorageSizing bestSizing = SECOND_PRECISION_RAW;
+        long intervalToSample = intervalEndSecondsIncl - intervalBeginSecondsIncl;
+        long minAggregateDataPoints = intervalToSample / bestSizing.getAggregateIntervalSeconds();
+
+        for( HistoricalDataStorageSizing sizing: HistoricalDataStorageSizing.values()) {
+            long aggregateInterval  = sizing.getAggregateIntervalSeconds();
+            long aggregateDataPoints = intervalToSample / aggregateInterval;
+            if ( aggregateDataPoints > 0
+                    && aggregateDataPoints > dataPointCount
+                    && aggregateDataPoints < minAggregateDataPoints) {
+                minAggregateDataPoints = aggregateDataPoints;
+                bestSizing = sizing;
+            }
+        }
+        return bestSizing;
     }
 
     private List<SensorMeasureHistorySecondsDao> loadMeasuresIncreasingOrder(String location, SensorMeasureType sensorMeasureType, long startTimeMillisIncl, long endTimeMillisIncl, HistoricalDataStorageSizing storageSizingWithNearestPeriod) {
