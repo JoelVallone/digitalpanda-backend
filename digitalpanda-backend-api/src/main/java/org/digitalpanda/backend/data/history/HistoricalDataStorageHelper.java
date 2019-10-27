@@ -21,7 +21,7 @@ public class HistoricalDataStorageHelper {
             case SECOND_PRECISION_RAW:
                 return "sensor_measure_history_seconds";
             default:
-                return "sensor_measure_history_seconds_" + sizing.getTimeBlockPeriodSeconds();
+                return "sensor_measure_history_seconds_" + sizing.getAggregateIntervalSeconds();
         }
     }
 
@@ -32,23 +32,20 @@ public class HistoricalDataStorageHelper {
             long intervalBeginMillisIncl,
             long intervalEndSecondsIncl) {
 
-        //Only second granularity measure data are available at the moment
-        if (targetHistoricalDataSizing.getAggregateIntervalSeconds() > 5L ) {
-            return emptyList();
-        }
-
+        String tableWithTargetGranularity = cqlTableOf(targetHistoricalDataSizing);
         long startBlockId = getHistoricalMeasureBlockId(intervalBeginMillisIncl, targetHistoricalDataSizing);
         long endBlockId = getHistoricalMeasureBlockId(intervalEndSecondsIncl, targetHistoricalDataSizing);
 
         return LongStream.rangeClosed(startBlockId, endBlockId).boxed()
                 .map(blockId ->
                         String.format(
-                            "SELECT * FROM iot.sensor_measure_history_seconds WHERE " +
+                            "SELECT * FROM iot.%s WHERE " +
                                     "location = '%s' AND " +
                                     "time_block_id = %d AND " +
                                     "measure_type = '%s' AND " +
                                     "bucket = %d AND " +
                                     "timestamp >= %d AND timestamp <= %d",
+                            tableWithTargetGranularity,
                             location,
                             blockId,
                             measureType.name(),
