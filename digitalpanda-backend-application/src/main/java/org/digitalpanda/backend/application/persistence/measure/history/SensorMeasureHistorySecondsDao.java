@@ -1,5 +1,6 @@
 package org.digitalpanda.backend.application.persistence.measure.history;
 
+import com.datastax.driver.core.Row;
 import org.springframework.data.cassandra.core.cql.PrimaryKeyType;
 import org.springframework.data.cassandra.core.mapping.Column;
 import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
@@ -11,28 +12,46 @@ import java.util.Objects;
 @Table(SensorMeasureHistorySecondsDao.SENSOR_MEASURE_HISTORY_TABLE_NAME) //Record max size rough estimation : 20 + 8 +  4 + 8 + 20 + 10 + 8 (78) Bytes
 public class SensorMeasureHistorySecondsDao {
 
-    public static final String SENSOR_MEASURE_HISTORY_TABLE_NAME = "sensor_measure_history_seconds";
+    static final String SENSOR_MEASURE_HISTORY_TABLE_NAME = "sensor_measure_history_seconds";
     public static final int ROW_SIZE_BYTES = 86;
 
-    @PrimaryKeyColumn(name = "location", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
+    private static final String COL_LOCATION = "location";
+    private static final String COL_TIME_BLOCK_ID = "time_block_id";
+    private static final String COL_MEASURE_TYPE = "measure_type";
+    private static final String COL_BUCKET = "bucket";
+    private static final String COL_TIMESTAMP = "timestamp";
+    private static final String COL_VALUE = "value";
+
+    @PrimaryKeyColumn(name = COL_LOCATION, ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private String location;
 
-    @PrimaryKeyColumn(name = "time_block_id", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(name = COL_TIME_BLOCK_ID, ordinal = 1, type = PrimaryKeyType.PARTITIONED)
     private Long timeBlockId;
 
-    @PrimaryKeyColumn(name = "measure_type", ordinal = 2, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(name = COL_MEASURE_TYPE, ordinal = 2, type = PrimaryKeyType.PARTITIONED)
     private String measureType;
 
-    @PrimaryKeyColumn(name = "bucket", ordinal = 3, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(name = COL_BUCKET, ordinal = 3, type = PrimaryKeyType.PARTITIONED)
     private Integer bucket;
 
-    @PrimaryKeyColumn(name = "timestamp", ordinal = 4, type = PrimaryKeyType.CLUSTERED)
+    @PrimaryKeyColumn(name = COL_TIMESTAMP, ordinal = 4, type = PrimaryKeyType.CLUSTERED)
     private Date timestamp;
 
     @Column
     private double value;
 
     public SensorMeasureHistorySecondsDao() {
+    }
+
+    SensorMeasureHistorySecondsDao(Row row) {
+        this(
+                row.getString(COL_LOCATION),
+                row.getLong(COL_TIME_BLOCK_ID),
+                row.getString(COL_MEASURE_TYPE),
+                row.getInt(COL_BUCKET),
+                row.getTimestamp(COL_TIMESTAMP),
+                row.getDouble(COL_VALUE)
+        );
     }
 
     public SensorMeasureHistorySecondsDao(String location, Long timeBlockId, String measureType, Integer bucket, Date timestamp, double value) {

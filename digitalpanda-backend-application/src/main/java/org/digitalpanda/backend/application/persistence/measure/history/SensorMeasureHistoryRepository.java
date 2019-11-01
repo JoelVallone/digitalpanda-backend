@@ -1,11 +1,11 @@
 package org.digitalpanda.backend.application.persistence.measure.history;
 
+import com.datastax.driver.core.Session;
 import org.digitalpanda.backend.data.history.HistoricalDataStorageSizing;
 import org.digitalpanda.backend.data.SensorMeasureType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,10 +19,11 @@ public class SensorMeasureHistoryRepository {
     private Logger logger = LoggerFactory.getLogger(SensorMeasureHistoryRepository.class);
 
     @Autowired
-    private CassandraOperations cassandraTemplate; //Used for advanced queries
+    //private CassandraOperations cassandraTemplate //Used for advanced API-based queries
+    private Session cassandraSession; //Used for advanced manual queries
 
     @Autowired
-    private SensorMeasureHistoryRepositoryCRUD sensorMeasureHistoryRepoCRUD; //Available for CRUD queries
+    private SensorMeasureHistorySecondsRepositoryCRUD sensorMeasureHistoryRepoCRUD; //Available for basic CRUD queries
 
     public SensorMeasureHistoryRepository() {
 
@@ -40,13 +41,12 @@ public class SensorMeasureHistoryRepository {
             long intervalBeginMillisIncl,
             long intervalEndSecondsIncl) {
 
-        return getRangeSelectionCqlQueries(location, measureType, targetHistoricalDataSizing,
-                intervalBeginMillisIncl,intervalEndSecondsIncl).stream()
-                .map( cqlRangeSelect ->
-                    cassandraTemplate.select(cqlRangeSelect, SensorMeasureHistorySecondsDao.class)
-                ).flatMap(List::stream)
+        return getRangeSelectionCqlQueries(
+                    location, measureType, targetHistoricalDataSizing,
+                    intervalBeginMillisIncl,intervalEndSecondsIncl).stream()
+                .map(cassandraSession::execute)
+                .flatMap( rows -> rows.all().stream().map(SensorMeasureHistorySecondsDao::new))
                 .collect(toList());
     }
-
 
 }

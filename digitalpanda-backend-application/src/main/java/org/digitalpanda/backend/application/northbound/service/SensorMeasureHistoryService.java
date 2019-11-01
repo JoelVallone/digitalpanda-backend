@@ -1,5 +1,6 @@
 package org.digitalpanda.backend.application.northbound.service;
 
+import org.digitalpanda.backend.application.util.Pair;
 import org.digitalpanda.backend.data.history.HistoricalDataStorageSizing;
 import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistorySecondsDao;
 import org.digitalpanda.backend.application.persistence.measure.history.SensorMeasureHistoryRepository;
@@ -76,25 +77,47 @@ public class SensorMeasureHistoryService {
 
     public List<SensorMeasuresEquidistributed> getMeasuresWithContinuousEquidistributedSubIntervals(
             String location, SensorMeasureType sensorMeasureType, long startTimeMillisIncl, long endTimeMillisExcl, int dataPointCount) {
-        HistoricalDataStorageSizing storageSizing = allowAggregates ? sizingWithLowestFittingPeriod(startTimeMillisIncl, endTimeMillisExcl, dataPointCount) : SECOND_PRECISION_RAW;
 
         long start = System.currentTimeMillis();
+        Pair<HistoricalDataStorageSizing, List<SensorMeasureHistorySecondsDao>> timeSortedBaseSample =
+                loadBestFittingSample(
+                        location,
+                        sensorMeasureType,
+                        startTimeMillisIncl,
+                        endTimeMillisExcl,
+                        dataPointCount);
+        long dbLoaded = System.currentTimeMillis();
+
+        List<SensorMeasuresEquidistributed> resizedSample =
+                resizeSample(
+                        startTimeMillisIncl,
+                        endTimeMillisExcl,
+                        dataPointCount,
+                        timeSortedBaseSample.getSecond(),
+                        timeSortedBaseSample.getFirst());
+        long sampleResized = System.currentTimeMillis();
+
+        logger.info("Execution time breakdown:"
+                        + "\n> Total execution time: " + (sampleResized - start) + " Millis"
+                        + "\n -> db load time: " + (dbLoaded - start) + " Millis"
+                        + "\n --> row count: " + timeSortedBaseSample.getSecond().size()
+                        + "\n -> sample resizing: " + (sampleResized - dbLoaded) + " Millis"
+                        + "\n --> Covered sample interval: " + (endTimeMillisExcl - startTimeMillisIncl) + " Millis"
+        );
+
+        return resizedSample;
+    }
+
+    public Pair<HistoricalDataStorageSizing, List<SensorMeasureHistorySecondsDao>> loadBestFittingSample(
+            String location, SensorMeasureType sensorMeasureType, long startTimeMillisIncl, long endTimeMillisExcl, int dataPointCount){
+
+        HistoricalDataStorageSizing storageSizing = allowAggregates ? sizingWithLowestFittingPeriod(startTimeMillisIncl, endTimeMillisExcl, dataPointCount) : SECOND_PRECISION_RAW;
+
         long trimmedEndTimeMillisIncl = endTimeMillisExcl;
         if((endTimeMillisExcl - startTimeMillisIncl) / (storageSizing.getTimeBlockPeriodSeconds()*1000)  > MAX_ROW_COUNT) {
             trimmedEndTimeMillisIncl = startTimeMillisIncl + (storageSizing.getTimeBlockPeriodSeconds() * 1000 * MAX_ROW_COUNT);
         }
-        List<SensorMeasureHistorySecondsDao> storageValuesTimeIncreasing = loadMeasuresIncreasingOrder(location, sensorMeasureType, startTimeMillisIncl, trimmedEndTimeMillisIncl, storageSizing);
-        long dbLoaded = System.currentTimeMillis();
-        List<SensorMeasuresEquidistributed> resizedSample = resizeSample(startTimeMillisIncl, endTimeMillisExcl, dataPointCount, storageValuesTimeIncreasing, storageSizing);
-        long sampleResized = System.currentTimeMillis();
-        logger.info("Execution time breakdown:"
-                        + "\n> Total execution time: " + (sampleResized - start) + " Millis"
-                        + "\n -> db load time: " + (dbLoaded - start) + " Millis"
-                        + "\n --> row count: " + storageValuesTimeIncreasing.size()
-                        + "\n -> sample resizing: " + (sampleResized - dbLoaded) + " Millis"
-                        + "\n --> Covered sample interval: " + (endTimeMillisExcl - startTimeMillisIncl) + " Millis"
-        );
-        return resizedSample;
+        return new Pair<>(storageSizing, loadMeasuresIncreasingOrder(location, sensorMeasureType, startTimeMillisIncl, trimmedEndTimeMillisIncl, storageSizing));
     }
 
     private List<SensorMeasuresEquidistributed> resizeSample(long startTimeMillisIncl, long endTimeMillisExcl, int targetDataPointCount, List<SensorMeasureHistorySecondsDao> storedMeasuresTimeIncreasing, HistoricalDataStorageSizing historicalDataStorageSizing) {
