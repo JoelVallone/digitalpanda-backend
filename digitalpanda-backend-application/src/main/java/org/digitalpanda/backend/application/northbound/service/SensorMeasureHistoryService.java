@@ -108,16 +108,57 @@ public class SensorMeasureHistoryService {
         return resizedSample;
     }
 
-    public Pair<HistoricalDataStorageSizing, List<SensorMeasureHistorySecondsDao>> loadBestFittingSample(
+    Pair<HistoricalDataStorageSizing, List<SensorMeasureHistorySecondsDao>> loadBestFittingSample(
             String location, SensorMeasureType sensorMeasureType, long startTimeMillisIncl, long endTimeMillisExcl, int dataPointCount){
 
-        HistoricalDataStorageSizing storageSizing = allowAggregates ? sizingWithLowestFittingPeriod(startTimeMillisIncl, endTimeMillisExcl, dataPointCount) : SECOND_PRECISION_RAW;
+        HistoricalDataStorageSizing idealSizing = allowAggregates ? sizingWithLowestFittingPeriod(startTimeMillisIncl / 1000L, endTimeMillisExcl / 1000L, dataPointCount) : SECOND_PRECISION_RAW;
 
-        long trimmedEndTimeMillisIncl = endTimeMillisExcl;
-        if((endTimeMillisExcl - startTimeMillisIncl) / (storageSizing.getTimeBlockPeriodSeconds()*1000)  > MAX_ROW_COUNT) {
-            trimmedEndTimeMillisIncl = startTimeMillisIncl + (storageSizing.getTimeBlockPeriodSeconds() * 1000 * MAX_ROW_COUNT);
+        List<SensorMeasureHistorySecondsDao> sample = emptyList();
+        List<HistoricalDataStorageSizing> nextBestSizing =
+                Arrays.stream(HistoricalDataStorageSizing.values())
+                        .filter(size -> size.ordinal() <= idealSizing.ordinal())
+                        .sorted((s1, s2) -> -1 * (s1.ordinal() - s2.ordinal())) // biggest granularity first
+                        .collect(toList());
+        HistoricalDataStorageSizing actualSizing = idealSizing;
+        while (sample.size() == 0 && nextBestSizing.size() > 0) {
+            actualSizing = nextBestSizing.get(0);
+
+            // Capping db query response size with time range limitation
+            long trimmedEndTimeMillisIncl = endTimeMillisExcl;
+            if((endTimeMillisExcl - startTimeMillisIncl) / (actualSizing.getAggregateIntervalSeconds()*1000)  > MAX_ROW_COUNT) {
+                trimmedEndTimeMillisIncl = startTimeMillisIncl + (actualSizing.getAggregateIntervalSeconds() * 1000 * MAX_ROW_COUNT);
+            }
+
+            sample = loadMeasuresIncreasingOrder(location, sensorMeasureType, startTimeMillisIncl, trimmedEndTimeMillisIncl, actualSizing);
+            nextBestSizing = nextBestSizing.size() > 1 ? nextBestSizing.subList(1, nextBestSizing.size()) : emptyList();
+            logger.debug("Granularity for history query: "
+                    + "\n -> target granularity: " + actualSizing.name()
+                    + "\n -> location: " + location
+                    + "\n -> measure: " + sensorMeasureType
+                    + "\n -> start time: " + startTimeMillisIncl + " Millis"
+                    + "\n -> end time: " + endTimeMillisExcl + " Millis"
+                    + "\n -> Covered sample interval: " + (endTimeMillisExcl - startTimeMillisIncl) + " Millis");
         }
-        return new Pair<>(storageSizing, loadMeasuresIncreasingOrder(location, sensorMeasureType, startTimeMillisIncl, trimmedEndTimeMillisIncl, storageSizing));
+
+        return new Pair<>(actualSizing, sample);
+    }
+
+    HistoricalDataStorageSizing sizingWithLowestFittingPeriod(long intervalBeginSecondsIncl, long intervalEndSecondsIncl, int dataPointCount) {
+        HistoricalDataStorageSizing bestSizing = SECOND_PRECISION_RAW;
+        long intervalToSample = intervalEndSecondsIncl - intervalBeginSecondsIncl;
+        long minAggregateDataPoints = intervalToSample / bestSizing.getAggregateIntervalSeconds();
+
+        for( HistoricalDataStorageSizing sizing: HistoricalDataStorageSizing.values()) {
+            long aggregateInterval  = sizing.getAggregateIntervalSeconds();
+            long aggregateDataPoints = intervalToSample / aggregateInterval;
+            if ( aggregateDataPoints > 0
+                    && aggregateDataPoints > dataPointCount
+                    && aggregateDataPoints < minAggregateDataPoints) {
+                minAggregateDataPoints = aggregateDataPoints;
+                bestSizing = sizing;
+            }
+        }
+        return bestSizing;
     }
 
     private List<SensorMeasuresEquidistributed> resizeSample(long startTimeMillisIncl, long endTimeMillisExcl, int targetDataPointCount, List<SensorMeasureHistorySecondsDao> storedMeasuresTimeIncreasing, HistoricalDataStorageSizing historicalDataStorageSizing) {
@@ -170,7 +211,10 @@ public class SensorMeasureHistoryService {
         return sensorMeasuresResizedEquidistributedSubSamples;
     }
 
-    private SensorMeasuresEquidistributed resizeSubSampleToTargetDataPointPeriodWithAverage(long startTimeMillisIncl, long endTimeMillisExcl, long targetPeriodMillis, List<SensorMeasureHistorySecondsDao> continuousStorageValuesTimeIncreasing){
+
+    private SensorMeasuresEquidistributed resizeSubSampleToTargetDataPointPeriodWithAverage(
+            long startTimeMillisIncl, long endTimeMillisExcl, long targetPeriodMillis, List<SensorMeasureHistorySecondsDao> continuousStorageValuesTimeIncreasing){
+
         int targetDataPointCount = toIntExact((endTimeMillisExcl - startTimeMillisIncl) / targetPeriodMillis) + 1;
         List<Double> resizedSample = new ArrayList<>(targetDataPointCount);
         long nextPeriodStartTimeMillisIncl = startTimeMillisIncl + targetPeriodMillis;
@@ -198,25 +242,9 @@ public class SensorMeasureHistoryService {
         return new SensorMeasuresEquidistributed(startTimeMillisIncl, startTimeMillisIncl + resizedSample.size() * targetPeriodMillis, targetPeriodMillis, resizedSample);
     }
 
-    HistoricalDataStorageSizing sizingWithLowestFittingPeriod(long intervalBeginSecondsIncl, long intervalEndSecondsIncl, int dataPointCount) {
-        HistoricalDataStorageSizing bestSizing = SECOND_PRECISION_RAW;
-        long intervalToSample = intervalEndSecondsIncl - intervalBeginSecondsIncl;
-        long minAggregateDataPoints = intervalToSample / bestSizing.getAggregateIntervalSeconds();
 
-        for( HistoricalDataStorageSizing sizing: HistoricalDataStorageSizing.values()) {
-            long aggregateInterval  = sizing.getAggregateIntervalSeconds();
-            long aggregateDataPoints = intervalToSample / aggregateInterval;
-            if ( aggregateDataPoints > 0
-                    && aggregateDataPoints > dataPointCount
-                    && aggregateDataPoints < minAggregateDataPoints) {
-                minAggregateDataPoints = aggregateDataPoints;
-                bestSizing = sizing;
-            }
-        }
-        return bestSizing;
-    }
-
-    private List<SensorMeasureHistorySecondsDao> loadMeasuresIncreasingOrder(String location, SensorMeasureType sensorMeasureType, long startTimeMillisIncl, long endTimeMillisIncl, HistoricalDataStorageSizing storageSizingWithNearestPeriod) {
+    private List<SensorMeasureHistorySecondsDao> loadMeasuresIncreasingOrder(
+            String location, SensorMeasureType sensorMeasureType, long startTimeMillisIncl, long endTimeMillisIncl, HistoricalDataStorageSizing storageSizingWithNearestPeriod) {
         return sensorMeasureHistoryRepository
                 .getMeasuresAtLocationWithInterval(
                         location,

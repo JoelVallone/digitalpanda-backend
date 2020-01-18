@@ -20,7 +20,9 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static junit.framework.TestCase.assertEquals;
 import static org.assertj.core.util.Lists.emptyList;
+import static org.digitalpanda.backend.data.SensorMeasureType.TEMPERATURE;
 import static org.digitalpanda.backend.data.history.HistoricalDataStorageSizing.*;
+import static org.mockito.Matchers.*;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.when;
 
@@ -28,7 +30,7 @@ import static org.mockito.Mockito.when;
 public class SensorMeasureHistoryServiceTest {
 
     private static final String TEST_LOCATION = "testLocation";
-    private static final SensorMeasureType TEST_MEASURE_TYPE = SensorMeasureType.TEMPERATURE;
+    private static final SensorMeasureType TEST_MEASURE_TYPE = TEMPERATURE;
     private static final HistoricalDataStorageSizing DEFAULT_STORAGE_SIZING = SECOND_PRECISION_RAW;
     private static final long REF_EPOCH_MILLIS = 1540714000000L;
 
@@ -39,6 +41,55 @@ public class SensorMeasureHistoryServiceTest {
     public void init(boolean allowAggregate) {
          this.sensorMeasureHistoryService = new SensorMeasureHistoryService(sensorMeasureHistoryRepositoryMock, allowAggregate);
     }
+
+
+    @Test
+    public void loadBestFittingSample_shouldFallbackToNearestSizingAvailable() {
+        //Given
+        init(true);
+        String location = TEST_LOCATION;
+        SensorMeasureType measureType = TEST_MEASURE_TYPE;
+        int startTimeMillisIncl = 0;
+        long endTimeMillisExcl = 24 * 3600 * 1000L;
+        int dataPointCount = 20;
+        List<SensorMeasureHistorySecondsDao> minuteMeasures = generateStorageData(Arrays.asList(new Pair<>(10001L, 42.0), new Pair<>(1L, 42.0)));
+        List<SensorMeasureHistorySecondsDao> expected = generateStorageData(Arrays.asList(new Pair<>(1L, 42.0),new Pair<>(10001L, 42.0)));
+
+        //When, Then
+        when(sensorMeasureHistoryRepositoryMock.getMeasuresAtLocationWithInterval(
+                location, measureType, HOUR_PRECISION_AVG, startTimeMillisIncl, endTimeMillisExcl))
+                .then( input -> emptyList());
+        when(sensorMeasureHistoryRepositoryMock.getMeasuresAtLocationWithInterval(
+                location, measureType, MINUTE_PRECISION_AVG, startTimeMillisIncl, endTimeMillisExcl))
+                .then( input -> minuteMeasures);
+        Pair<HistoricalDataStorageSizing, List<SensorMeasureHistorySecondsDao>> actual =
+                sensorMeasureHistoryService.loadBestFittingSample(location, measureType, startTimeMillisIncl, endTimeMillisExcl, dataPointCount);
+
+        // Then
+        assertEquals(new Pair<>(MINUTE_PRECISION_AVG, expected), actual);
+    }
+
+    @Test
+    public void loadBestFittingSample_shouldReturnEmptyList() {
+        //Given
+        init(true);
+        String location = TEST_LOCATION;
+        SensorMeasureType temperature = TEST_MEASURE_TYPE;
+        int startTimeMillisIncl = 0;
+        long endTimeMillisExcl = 24 * 3600 * 1000L;
+        int dataPointCount = 20;
+
+        //When, Then
+        when(sensorMeasureHistoryRepositoryMock.getMeasuresAtLocationWithInterval(
+                anyString(), any(), any(), anyLong(), anyLong()))
+                .then( input -> Collections.emptyList());
+        Pair<HistoricalDataStorageSizing, List<SensorMeasureHistorySecondsDao>> actual =
+                sensorMeasureHistoryService.loadBestFittingSample(location, temperature, startTimeMillisIncl, endTimeMillisExcl, dataPointCount);
+
+        // Then
+        assertEquals(new Pair<>(SECOND_PRECISION_RAW, emptyList()), actual);
+    }
+
 
     @Test
     public void nearestLowestPeriod_shouldFindNearest(){
@@ -90,7 +141,7 @@ public class SensorMeasureHistoryServiceTest {
                 singletonList(new SensorMeasure(1549090327393L, 943.09))
         ));
         sensorMeasuresList.add(new SensorMeasures(
-                new SensorMeasureMetaData("server-room", SensorMeasureType.TEMPERATURE),
+                new SensorMeasureMetaData("server-room", TEMPERATURE),
                 singletonList(new SensorMeasure(1549090327393L, 20.799999237060547))
         ));
         sensorMeasuresList.add(new SensorMeasures(
@@ -102,7 +153,7 @@ public class SensorMeasureHistoryServiceTest {
                 singletonList(new SensorMeasure(1549090327451L, 944.9091999410172))
         ));
         sensorMeasuresList.add(new SensorMeasures(
-                new SensorMeasureMetaData("outdoor", SensorMeasureType.TEMPERATURE),
+                new SensorMeasureMetaData("outdoor", TEMPERATURE),
                 Arrays.asList(
                         new SensorMeasure(1549090327451L, 7.213959392369725),
                         new SensorMeasure(1549090327453L, 7.413959392369725))
@@ -130,11 +181,11 @@ public class SensorMeasureHistoryServiceTest {
         init(false);
         List<SensorMeasures> sensorMeasuresList = new ArrayList<>();
         sensorMeasuresList.add(new SensorMeasures(
-                new SensorMeasureMetaData("outdoor", SensorMeasureType.TEMPERATURE),
+                new SensorMeasureMetaData("outdoor", TEMPERATURE),
                 emptyList())
         );
         sensorMeasuresList.add(new SensorMeasures(
-                new SensorMeasureMetaData("outdoor", SensorMeasureType.TEMPERATURE),
+                new SensorMeasureMetaData("outdoor", TEMPERATURE),
                 null)
         );
         sensorMeasuresList.add(new SensorMeasures(
@@ -150,7 +201,7 @@ public class SensorMeasureHistoryServiceTest {
                 singletonList(new SensorMeasure(1549090327451L, 944.9091999410172))
         ));
         sensorMeasuresList.add(new SensorMeasures(
-                new SensorMeasureMetaData("outdoor", SensorMeasureType.TEMPERATURE),
+                new SensorMeasureMetaData("outdoor", TEMPERATURE),
                 singletonList( new SensorMeasure(1549090327453L, 7.413959392369725))
         ));
 
@@ -309,7 +360,7 @@ public class SensorMeasureHistoryServiceTest {
         return timeValuePairs;
     }
 
-    private List<SensorMeasureHistorySecondsDao> generateStorageData(List<Pair<Long, Double>> timeValuePairs) {
+    private static List<SensorMeasureHistorySecondsDao> generateStorageData(List<Pair<Long, Double>> timeValuePairs) {
         return timeValuePairs.stream()
                 .map(timeValuePair ->
                         new SensorMeasureHistorySecondsDao(
