@@ -1,6 +1,10 @@
 # digitalpanda-backend
 Laboratory for the backend system
 
-#API
-/sensor/keys
-/sensor?location=indoor-BMP180&type=TEMPERATURE
+#API endpoints
+- /sensor/keys
+- /sensor?location=server-room&type=TEMPERATURE
+
+#Misc
+
+publish to maven local : `mvn install -DskipTests

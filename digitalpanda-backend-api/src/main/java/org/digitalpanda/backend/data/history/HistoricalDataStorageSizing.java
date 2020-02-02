@@ -1,9 +1,10 @@
 package org.digitalpanda.backend.data.history;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
 
-import static java.util.Arrays.asList;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
 
 /*
 Web user : < 200 ms responsiveness
@@ -35,6 +36,10 @@ public enum HistoricalDataStorageSizing {
     private Long aggregateIntervalSeconds;
     private AggregateType aggregateType;
 
+    private static final Map<Long, HistoricalDataStorageSizing> intervalMap = Arrays
+            .stream(HistoricalDataStorageSizing.values())
+            .collect(toMap(HistoricalDataStorageSizing::getAggregateIntervalSeconds, identity()));
+
 
     HistoricalDataStorageSizing(Long aggregateIntervalSeconds, AggregateType aggregateType){
         this.aggregateIntervalSeconds = aggregateIntervalSeconds;
@@ -52,5 +57,9 @@ public enum HistoricalDataStorageSizing {
 
     public AggregateType getAggregateType() {
         return aggregateType;
+    }
+
+    public static HistoricalDataStorageSizing fromIntervalSeconds(long intervalSec) {
+        return intervalMap.get(intervalSec);
     }
 }
